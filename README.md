@@ -1,2 +1,1 @@
-# libreria-mariela-api
-Api para Librería Mariela
+# libreria-mariela
