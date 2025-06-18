@@ -1,6 +1,7 @@
 package security
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"time"
@@ -14,15 +15,22 @@ type PasetoManager struct {
 }
 
 func NewPasetoManager() (*PasetoManager, error) {
-	key := os.Getenv("PASETO_SECRET_KEY")
-	if key == "" {
+	pasetoKey := os.Getenv("PASETO_SECRET_KEY")
+	if pasetoKey == "" {
 		return nil, fmt.Errorf("la variable de entorno PASETO_SECRET_KEY no está definida")
 	}
-	if len(key) != 32 {
-		return nil, fmt.Errorf("la clave debe tener exactamente 32 bytes")
+	secretPaseto, err := base64.StdEncoding.DecodeString(pasetoKey)
+
+	if err != nil {
+		return nil, fmt.Errorf("error al descodificar PASETO_SECRET_KEY: %v", err)
 	}
+
+	if len(secretPaseto) != 32 {
+		return nil, fmt.Errorf("la clave PASETO debe tener 32 bytes")
+	}
+
 	return &PasetoManager{
-		symmetricKey: []byte(key),
+		symmetricKey: secretPaseto,
 		v2:           paseto.NewV2(),
 	}, nil
 }
@@ -31,9 +39,11 @@ func (p *PasetoManager) GenerateToken(userID uint, username string, duration tim
 	if duration <= 0 {
 		return "", fmt.Errorf("la duración del token debe ser mayor a cero")
 	}
+
 	if userID == 0 {
 		return "", fmt.Errorf("el userID debe ser un valor válido")
 	}
+
 	if username == "" {
 		return "", fmt.Errorf("el username no puede estar vacío")
 	}

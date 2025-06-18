@@ -26,13 +26,16 @@ func (c *UserController) Login() gin.HandlerFunc {
 			return
 		}
 
-		token, err := c.service.Login(req)
+		response, err := c.service.Login(req)
 		if err != nil {
 			ctx.JSON(401, gin.H{"error": err.Error()})
 			return
 		}
 
-		ctx.JSON(200, gin.H{"token": token})
+		ctx.JSON(200, gin.H{
+			"access_token": response.AccessToken,
+			"info":         response.Info,
+		})
 	}
 }
 

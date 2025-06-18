@@ -22,16 +22,16 @@ func SeedInitialData(userRepo repositories.UserRepository, roleRepo repositories
 	}
 
 	// Seed ROOT user
-	username := "root"
-	password := os.Getenv("ROOT_PASSWORD") // asegurate de cargarlo antes con godotenv
+	userName := os.Getenv("ROOT_USER_NAME")
 	email := os.Getenv("ROOT_EMAIL")
+	password := os.Getenv("ROOT_PASSWORD")
 
 	if email == "" || password == "" {
 		log.Println("ROOT_EMAIL o ROOT_PASSWORD no seteados, se saltea creación de usuario root")
 		return nil
 	}
 
-	_, err := userRepo.FindByUserName(username)
+	_, err := userRepo.FindByEmail(email)
 	if err == nil {
 		log.Println("Usuario root ya existe, se omite creación.")
 		return nil
@@ -40,7 +40,7 @@ func SeedInitialData(userRepo repositories.UserRepository, roleRepo repositories
 	hashedPass, _ := utils.HashPassword(password)
 
 	rootUser := models.User{
-		Username: username,
+		Username: userName,
 		Email:    email,
 		Password: hashedPass,
 	}

@@ -8,9 +8,10 @@ import (
 
 type UserRepository interface {
 	Create(user *models.User) error
-	FindByUserName(userName string) (models.User, error)
+	FindByEmail(email string) (models.User, error)
 	FindById(ID uint64) (models.User, error)
 	Update(user *models.User) error
+	UpdateColumn(column string, value interface{}, id uint) error
 	VerifyRolExist(userID uint, roleID uint) int64
 	CreateUserRole(userRole *models.UserRole) error
 	RolesByUser(userID uint) (models.User, error)
@@ -28,9 +29,9 @@ func (r *userRepository) Create(user *models.User) error {
 	return r.db.Create(user).Error
 }
 
-func (r *userRepository) FindByUserName(userName string) (models.User, error) {
+func (r *userRepository) FindByEmail(email string) (models.User, error) {
 	var user models.User
-	err := r.db.Where("username = ?", userName).First(&user).Error
+	err := r.db.Preload("Roles").Where("email = ?", email).First(&user).Error
 	return user, err
 }
 
@@ -42,6 +43,10 @@ func (r *userRepository) FindById(id uint64) (models.User, error) {
 
 func (r *userRepository) Update(user *models.User) error {
 	return r.db.Save(user).Error
+}
+
+func (r *userRepository) UpdateColumn(column string, value interface{}, id uint) error {
+	return r.db.Model(&models.User{}).Where("id = ? AND is_active = ?", id, true).Update(column, value).Error
 }
 
 func (r *userRepository) VerifyRolExist(userID uint, roleID uint) int64 {
