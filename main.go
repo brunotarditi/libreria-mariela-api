@@ -3,7 +3,10 @@ package main
 import (
 	"libreria/app"
 	"libreria/db"
+	"libreria/middlewares"
 	"log"
+	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -26,7 +29,8 @@ func main() {
 
 	// Agregar middlewares esenciales manualmente
 	r.Use(gin.Recovery())
-
+	origins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
+	r.Use(middlewares.CORSMiddleware(origins))
 	if gin.Mode() == gin.DebugMode {
 		r.Use(gin.Logger())
 	}
