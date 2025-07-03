@@ -53,7 +53,7 @@ func (s *userService) Login(req requests.LoginRequest) (responses.TokenResponse,
 	rolesJSON, err := json.Marshal(roleNames)
 	if err != nil {
 		fmt.Println("Error al serializar:", err)
-		return responses.TokenResponse{}, fmt.Errorf("Error al serializar: %v", err)
+		return responses.TokenResponse{}, fmt.Errorf("error al serializar: %v", err)
 	}
 
 	info := base64.StdEncoding.EncodeToString(rolesJSON)

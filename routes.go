@@ -19,28 +19,40 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 
 	// Security
 	tokenManager, _ := security.NewPasetoManager()
+	// Common operations
+	categoryOps := common.NewGormOperations[models.Category](app.DB)
+	brandOps := common.NewGormOperations[models.Brand](app.DB)
+	productOps := common.NewGormOperations[models.Product](app.DB)
+	supplierOps := common.NewGormOperations[models.Supplier](app.DB)
+	customerdOps := common.NewGormOperations[models.Customer](app.DB)
 	// Repositorios
-	userRepo := repositories.NewUserRepositoryRepository(app.DB)
-	purchaseRepo := repositories.NewPurchaseHistoryRepository(app.DB)
-	sellRepo := repositories.NewSellHistoryRepository(app.DB)
+	dashboardRepo := repositories.NewDashboardRepository(app.DB)
+	productRepo := repositories.NewProductRepository(app.DB)
 	productStockRepo := repositories.NewProductStockRepository(app.DB)
-	stockMovementRepo := repositories.NewStockMovementRepository(app.DB)
+	purchaseRepo := repositories.NewPurchaseHistoryRepository(app.DB)
 	roleRepo := repositories.NewRoleRepositoryRepository(app.DB)
+	sellRepo := repositories.NewSellHistoryRepository(app.DB)
+	stockMovementRepo := repositories.NewStockMovementRepository(app.DB)
+	userRepo := repositories.NewUserRepositoryRepository(app.DB)
 	// Servicios
-	userService := services.NewUserService(app.DB, userRepo, roleRepo, tokenManager)
+	productService := services.NewProductService(app.DB, productRepo, categoryOps, brandOps)
 	productStockService := services.NewProductStockService(app.DB, productStockRepo)
 	stockMovementService := services.NewStockMovementService(app.DB, stockMovementRepo)
 	purchaseService := services.NewPurchaseHistoryService(app.DB, purchaseRepo, productStockRepo, stockMovementRepo, productStockService, stockMovementService)
 	sellService := services.NewSellHistoryService(app.DB, sellRepo, productStockRepo, stockMovementRepo, productStockService, stockMovementService)
+	userService := services.NewUserService(app.DB, userRepo, roleRepo, tokenManager)
+	dashboardService := services.NewDashboardService(app.DB, dashboardRepo, supplierOps, customerdOps, productOps)
 
 	// Seed inicial
 	if err := services.SeedInitialData(userRepo, roleRepo); err != nil {
 		log.Fatalf("Error al hacer seed inicial: %v", err)
 	}
 	// Controladores
-	userController := controllers.NewUserControllerController(userService)
+	productController := controllers.NewProductController(productService)
 	purchaseController := controllers.NewPurchaseHistoryController(purchaseService)
 	sellController := controllers.NewSellHistoryControllerController(sellService)
+	userController := controllers.NewUserControllerController(userService)
+	dashboardController := controllers.NewDashboardController(dashboardService)
 
 	router := r.Group("/api/v1")
 
@@ -62,48 +74,47 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 
 		categories := private.Group("/categories")
 		{
-			ops := common.NewGormOperations[models.Category](app.DB)
-			categories.GET("", common.Get(ops))
-			categories.GET("/:id", common.GetByID(ops))
-			categories.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.Category, requests.CategoryRequest](ops))
-			categories.PUT("/:id", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Update[models.Category, requests.CategoryRequest](ops))
-			categories.DELETE("/:id", middlewares.RequireAnyRole("ADMIN", "ROOT"), common.Delete(ops))
+			categories.GET("", common.Get(categoryOps))
+			categories.GET("/:id", common.GetByID(categoryOps))
+			categories.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.Category, requests.CategoryRequest](categoryOps))
+			categories.POST("/list", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.CreateMany[models.Category, requests.CategoryRequestArray](categoryOps))
+			categories.PUT("/:id", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Update[models.Category, requests.CategoryRequest](categoryOps))
+			categories.DELETE("/:id", middlewares.RequireAnyRole("ADMIN", "ROOT"), common.Delete(categoryOps))
 		}
 		brands := private.Group("/brands")
 		{
-			ops := common.NewGormOperations[models.Brand](app.DB)
-			brands.GET("", common.Get(ops))
-			brands.GET("/:id", common.GetByID(ops))
-			brands.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.Brand, requests.BrandRequest](ops))
-			brands.PUT("/:id", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Update[models.Brand, requests.BrandRequest](ops))
-			brands.DELETE("/:id", middlewares.RequireAnyRole("ADMIN", "ROOT"), common.Delete(ops))
+			brands.GET("", common.Get(brandOps))
+			brands.GET("/:id", common.GetByID(brandOps))
+			brands.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.Brand, requests.BrandRequest](brandOps))
+			brands.POST("/list", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.CreateMany[models.Brand, requests.BrandRequestArray](brandOps))
+			brands.PUT("/:id", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Update[models.Brand, requests.BrandRequest](brandOps))
+			brands.DELETE("/:id", middlewares.RequireAnyRole("ADMIN", "ROOT"), common.Delete(brandOps))
 		}
 		customers := private.Group("/customers")
 		{
-			ops := common.NewGormOperations[models.Customer](app.DB)
-			customers.GET("", common.Get(ops))
-			customers.GET("/:id", common.GetByID(ops))
-			customers.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.Customer, requests.CustomerRequest](ops))
-			customers.PUT("/:id", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Update[models.Customer, requests.CustomerRequest](ops))
-			customers.DELETE("/:id", middlewares.RequireAnyRole("ADMIN", "ROOT"), common.Delete(ops))
+			customers.GET("", common.Get(customerdOps))
+			customers.GET("/:id", common.GetByID(customerdOps))
+			customers.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.Customer, requests.CustomerRequest](customerdOps))
+			customers.PUT("/:id", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Update[models.Customer, requests.CustomerRequest](customerdOps))
+			customers.DELETE("/:id", middlewares.RequireAnyRole("ADMIN", "ROOT"), common.Delete(customerdOps))
 		}
 		suppliers := private.Group("/suppliers")
 		{
-			ops := common.NewGormOperations[models.Supplier](app.DB)
-			suppliers.GET("", common.Get(ops))
-			suppliers.GET("/:id", common.GetByID(ops))
-			suppliers.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.Supplier, requests.SupplierRequest](ops))
-			suppliers.PUT("/:id", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Update[models.Supplier, requests.SupplierRequest](ops))
-			suppliers.DELETE("/:id", middlewares.RequireAnyRole("ADMIN", "ROOT"), common.Delete(ops))
+			suppliers.GET("", common.Get(supplierOps))
+			suppliers.GET("/:id", common.GetByID(supplierOps))
+			suppliers.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.Supplier, requests.SupplierRequest](supplierOps))
+			suppliers.PUT("/:id", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Update[models.Supplier, requests.SupplierRequest](supplierOps))
+			suppliers.DELETE("/:id", middlewares.RequireAnyRole("ADMIN", "ROOT"), common.Delete(supplierOps))
 		}
 		products := private.Group("/products")
 		{
-			ops := common.NewGormOperations[models.Product](app.DB)
-			products.GET("", common.Get(ops))
-			products.GET("/:id", common.GetByID(ops))
-			products.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.Product, requests.ProductRequest](ops))
-			products.PUT("/:id", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Update[models.Product, requests.ProductRequest](ops))
-			products.DELETE("/:id", middlewares.RequireAnyRole("ADMIN", "ROOT"), common.Delete(ops))
+			products.GET("/:id", common.GetByID(productOps))
+			products.GET("", productController.FindAllWithCategoriesAndBrands())
+			products.GET("/export", middlewares.RequireAnyRole("WRITE", "READ", "ADMIN", "ROOT"), productController.GetExport())
+			products.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.Product, requests.ProductRequest](productOps))
+			products.POST("/import", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), productController.ImportFromExcel())
+			products.PUT("/:id", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Update[models.Product, requests.ProductRequest](productOps))
+			products.DELETE("/:id", middlewares.RequireAnyRole("ADMIN", "ROOT"), common.Delete(productOps))
 		}
 		purchaseHistories := private.Group("/purchases")
 		{
@@ -133,6 +144,10 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 			priceLists.GET("", common.Get(ops))
 			priceLists.GET("/:id", common.GetByID(ops))
 			priceLists.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.PriceList, requests.PriceListRequest](ops))
+		}
+		dashboard := private.Group("/dashboard")
+		{
+			dashboard.GET("", dashboardController.GetData())
 		}
 
 	}
