@@ -3,6 +3,7 @@ package common
 import (
 	"libreria/requests"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,6 +31,40 @@ func GetByID[T any](ops Operations[T]) gin.HandlerFunc {
 	}
 }
 
+func Paginated[T any](ops Operations[T]) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, _ := strconv.Atoi(c.DefaultQuery("page", "0"))
+		size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+
+		options := QueryOptions{
+			Search:    c.Query("search"),
+			Sort:      c.DefaultQuery("sort", "id"),
+			Direction: c.DefaultQuery("direction", "asc"),
+		}
+
+		offset := page * size
+
+		total, err := ops.Count(options)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		models, err := ops.Paginated(offset, size, options)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"data":  models,
+			"total": total,
+			"page":  page,
+			"size":  size,
+		})
+	}
+}
+
 func Create[T any, R requests.MapperRequest[T]](ops Operations[T]) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request R
@@ -38,8 +73,8 @@ func Create[T any, R requests.MapperRequest[T]](ops Operations[T]) gin.HandlerFu
 			return
 		}
 
-		if validatable, ok := any(request).(requests.ValidateRequest); ok {
-			if err := validatable.Validate(ops.(*GormOperations[T]).db); err != nil {
+		if validator, ok := any(request).(requests.ValidateRequest); ok {
+			if err := validator.Validate(ops.(*GormOperations[T]).db); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
@@ -59,6 +94,35 @@ func Create[T any, R requests.MapperRequest[T]](ops Operations[T]) gin.HandlerFu
 	}
 }
 
+func CreateMany[T any, R interface {
+	requests.MapperArrayRequest[T]
+	requests.ValidateRequest
+}](ops Operations[T]) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var requests R
+		if err := c.ShouldBindJSON(&requests); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if err := requests.Validate(ops.(*GormOperations[T]).db); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		models, err := mapperArray(requests)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := ops.CreateMany(models); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusCreated, models)
+	}
+}
+
 func Update[T any, R requests.MapperRequest[T]](ops Operations[T]) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -74,8 +138,8 @@ func Update[T any, R requests.MapperRequest[T]](ops Operations[T]) gin.HandlerFu
 			return
 		}
 
-		if validatable, ok := any(request).(requests.ValidateRequest); ok {
-			if err := validatable.Validate(ops.(*GormOperations[T]).db); err != nil {
+		if validator, ok := any(request).(requests.ValidateOnUpdate[T]); ok {
+			if err := validator.ValidateUpdate(ops.(*GormOperations[T]).db, existing); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
@@ -100,10 +164,10 @@ func Delete[T any](ops Operations[T]) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		if err := ops.Delete(id); err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Entidad no encontrada"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "No encontrado"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "Entidad eliminada"})
+		c.JSON(http.StatusOK, gin.H{"message": "Eliminado con éxito"})
 	}
 }
 
@@ -112,4 +176,8 @@ func mapper[T any, R requests.MapperRequest[T]](req R, existing ...T) (T, error)
 		return req.UpdateModel(existing[0])
 	}
 	return req.ToModel()
+}
+
+func mapperArray[T any, R requests.MapperArrayRequest[T]](req R) ([]T, error) {
+	return req.ToArrayModel()
 }
