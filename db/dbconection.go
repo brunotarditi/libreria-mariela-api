@@ -6,11 +6,11 @@ import (
 	"log"
 	"os"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-var mysqlDB *gorm.DB
+var postgresqlDB *gorm.DB
 
 func ConnectDB() (db *gorm.DB) {
 
@@ -23,28 +23,28 @@ func ConnectDB() (db *gorm.DB) {
 	}
 
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=America/Argentina/Buenos_Aires",
+		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
 		os.Getenv("DB_NAME"),
+		os.Getenv("DB_PORT"),
 	)
-	db, err := gorm.Open(mysql.New(mysql.Config{DSN: dsn}), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		log.Fatal("Error conectando a la base de datos:", err)
 	}
 
-	mysqlDB = db
-	return mysqlDB
+	postgresqlDB = db
+	return postgresqlDB
 }
 
 func AutoMigrate() {
-	if mysqlDB == nil {
+	if postgresqlDB == nil {
 		log.Fatal("La base de datos no está inicializada")
 	}
-	mysqlDB.AutoMigrate(
+	postgresqlDB.AutoMigrate(
 		&models.Category{},
 		&models.Brand{},
 		&models.Customer{},
@@ -63,10 +63,10 @@ func AutoMigrate() {
 }
 
 func DisconnectDB() {
-	if mysqlDB == nil {
+	if postgresqlDB == nil {
 		log.Fatal("La base de datos no está inicializada")
 	}
-	connect, err := mysqlDB.DB()
+	connect, err := postgresqlDB.DB()
 	if err != nil {
 		log.Fatal("Error al obtener la conexión de la base de datos:", err)
 	}
@@ -76,8 +76,8 @@ func DisconnectDB() {
 }
 
 func GetDatabaseMySQL() *gorm.DB {
-	if mysqlDB == nil {
+	if postgresqlDB == nil {
 		log.Fatal("La base de datos no está inicializada")
 	}
-	return mysqlDB
+	return postgresqlDB
 }

@@ -18,9 +18,9 @@ type Operations[T any] interface {
 	FindByID(id string) (T, error)
 	Paginated(offset, size int, options QueryOptions) ([]T, error)
 	Count(options QueryOptions) (int64, error)
-	Create(model T) error
+	Create(model T) (T, error)
 	CreateMany(model []T) error
-	Update(model T) error
+	Update(model T) (T, error)
 	Delete(id string) error
 	Pluck(field string) ([]string, error)
 }
@@ -59,8 +59,9 @@ func (ops *GormOperations[T]) Count(options QueryOptions) (int64, error) {
 	return total, err
 }
 
-func (ops *GormOperations[T]) Create(model T) error {
-	return ops.db.Create(&model).Error
+func (ops *GormOperations[T]) Create(model T) (T, error) {
+	err := ops.db.Create(&model).Error
+	return model, err
 }
 
 func (ops *GormOperations[T]) CreateMany(model []T) error {
@@ -69,8 +70,9 @@ func (ops *GormOperations[T]) CreateMany(model []T) error {
 	})
 }
 
-func (ops *GormOperations[T]) Update(model T) error {
-	return ops.db.Save(&model).Error
+func (ops *GormOperations[T]) Update(model T) (T, error) {
+	err := ops.db.Save(&model).Error
+	return model, err
 }
 
 func (ops *GormOperations[T]) Delete(id string) error {

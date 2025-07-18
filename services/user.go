@@ -20,6 +20,7 @@ type UserService interface {
 	Login(req requests.LoginRequest) (responses.TokenResponse, error)
 	AssignRole(req requests.Role, id uint64) error
 	FindRolesByUser(userID uint) (models.User, error)
+	FindAll() ([]models.User, error)
 }
 
 type userService struct {
@@ -147,4 +148,12 @@ func (s *userService) FindRolesByUser(userID uint) (models.User, error) {
 		return models.User{}, fmt.Errorf("roles no encontrados")
 	}
 	return user, nil
+}
+
+func (s *userService) FindAll() ([]models.User, error) {
+	users, err := s.userRepo.FindAll()
+	if err != nil {
+		return nil, fmt.Errorf("error al obtener usuarios: %v", err)
+	}
+	return users, nil
 }
