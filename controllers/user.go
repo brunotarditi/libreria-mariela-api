@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"libreria/requests"
+	"libreria/responses"
 	"libreria/services"
 	"net/http"
 	"strconv"
@@ -79,5 +80,38 @@ func (c *UserController) AssignRole() gin.HandlerFunc {
 		}
 
 		ctx.JSON(200, gin.H{"message": "rol asignado con éxito"})
+	}
+}
+
+func (c *UserController) FindAll() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		users, err := c.service.FindAll()
+		if err != nil {
+			ctx.JSON(500, gin.H{"error": "error al obtener usuarios"})
+			return
+		}
+
+		if len(users) == 0 {
+			ctx.JSON(http.StatusOK, []responses.UserResponse{})
+			return
+		}
+
+		usersResponse := make([]responses.UserResponse, 0, len(users))
+		for _, user := range users {
+			userRes := responses.UserResponse{
+				ID:        user.ID,
+				Username:  user.Username,
+				IsActive:  user.IsActive,
+				LastLogin: user.LastLogin,
+				CreatedAt: user.CreatedAt,
+				Roles:     make([]string, 0, len(user.Roles)),
+			}
+			for _, role := range user.Roles {
+				userRes.Roles = append(userRes.Roles, string(role.Name))
+			}
+			usersResponse = append(usersResponse, userRes)
+		}
+
+		ctx.JSON(200, usersResponse)
 	}
 }

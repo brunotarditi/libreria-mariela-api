@@ -85,12 +85,12 @@ func Create[T any, R requests.MapperRequest[T]](ops Operations[T]) gin.HandlerFu
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-
-		if err := ops.Create(model); err != nil {
+		createdModel, err := ops.Create(model)
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusCreated, model)
+		c.JSON(http.StatusCreated, createdModel)
 	}
 }
 
@@ -151,12 +151,13 @@ func Update[T any, R requests.MapperRequest[T]](ops Operations[T]) gin.HandlerFu
 			return
 		}
 
-		if err := ops.Update(model); err != nil {
+		updatedModel, err := ops.Update(model)
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, model)
+		c.JSON(http.StatusOK, updatedModel)
 	}
 }
 

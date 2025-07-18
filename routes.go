@@ -56,7 +56,14 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 
 	router := r.Group("/api/v1")
 
-	public := router.Group("/users")
+	health := router.Group("/healthy")
+	{
+		health.GET("", func(ctx *gin.Context) {
+			ctx.JSON(200, map[string]interface{}{"message": "success", "api": "libreria mariela"})
+		})
+	}
+
+	public := router.Group("/auth")
 	{
 		public.POST("/login", userController.Login())
 		public.POST("/register", userController.UserRegister())
@@ -67,6 +74,13 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	private.Use(middlewares.AuditMiddleware(app.DB))
 
 	{
+		users := private.Group("/users")
+		{
+			ops := common.NewGormOperations[models.User](app.DB)
+			users.GET("", userController.FindAll())
+			users.PATCH("/:id", common.Update[models.User, requests.UserRequest](ops))
+		}
+
 		roles := private.Group("/roles")
 		{
 			roles.POST("/:id/assign", middlewares.RequireAnyRole("ROOT"), userController.AssignRole())

@@ -7,6 +7,7 @@ import (
 )
 
 type UserRepository interface {
+	FindAll() ([]models.User, error)
 	Create(user *models.User) error
 	FindByEmail(email string) (models.User, error)
 	FindById(ID uint64) (models.User, error)
@@ -23,6 +24,15 @@ type userRepository struct {
 
 func NewUserRepositoryRepository(db *gorm.DB) UserRepository {
 	return &userRepository{db: db}
+}
+
+func (r *userRepository) FindAll() ([]models.User, error) {
+	var users []models.User
+	err := r.db.Preload("Roles").Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 func (r *userRepository) Create(user *models.User) error {

@@ -9,6 +9,8 @@ import (
 
 type ProductRequest struct {
 	Name         string  `json:"name" binding:"required,min=1,max=65"`
+	Code         string  `json:"code" binding:"required,min=1,max=20"`
+	Sku          string  `json:"sku" binding:"max=20"`
 	ProfitMargin float64 `json:"profit_margin" binding:"required,gt=0"`
 	Description  string  `json:"description"`
 	CategoryID   uint    `json:"category_id" binding:"required"`
@@ -18,6 +20,8 @@ type ProductRequest struct {
 func (r ProductRequest) ToModel() (models.Product, error) {
 	return models.Product{
 		Name:         r.Name,
+		Code:         r.Code,
+		Sku:          r.Sku,
 		ProfitMargin: r.ProfitMargin,
 		CategoryID:   r.CategoryID,
 		Description:  r.Description,
@@ -27,6 +31,8 @@ func (r ProductRequest) ToModel() (models.Product, error) {
 
 func (r ProductRequest) UpdateModel(existing models.Product) (models.Product, error) {
 	existing.Name = r.Name
+	existing.Code = r.Code
+	existing.Sku = r.Sku
 	existing.ProfitMargin = r.ProfitMargin
 	existing.Description = r.Description
 	existing.CategoryID = r.CategoryID
