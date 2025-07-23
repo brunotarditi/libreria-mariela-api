@@ -18,11 +18,23 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.RASPBERRY_SSH_KEY }}
 
+      - name: Instalar cloudflared
+        run: |
+          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          chmod +x cloudflared
+          sudo mv cloudflared /usr/local/bin/
+
       - name: Deploy por SSH
         run: |
-          ssh -o StrictHostKeyChecking=no -p 2222 ${{ secrets.RASPBERRY_USER }}@${{ secrets.RASPBERRY_HOST }} << 'EOF'
+          ssh -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
+              -o StrictHostKeyChecking=no \  
+              -p 2222 ${{ secrets.RASPBERRY_USER }}@$DOMAIN << 'EOF'
             cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose  
             docker compose down
             docker compose pull 
             docker compose up -d --build
           EOF
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          DOMAIN: ${{ secrets.DOMAIN }}
