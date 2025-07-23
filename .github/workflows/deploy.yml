@@ -39,10 +39,26 @@ jobs:
           ssh -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
               -o StrictHostKeyChecking=no \
               -p 2222 ${{ secrets.RASPBERRY_USER }}@$DOMAIN_CLEAN << EOF
+            set -e
+
             cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose
-            docker compose down
-            docker compose pull
-            docker compose up -d --build
+
+            echo "🧼 Apagando contenedores actuales..."
+            docker compose -f libreria_mariela_docker_compose.yml down
+
+            echo "📥 Bajando imágenes actualizadas..."
+            docker compose -f libreria_mariela_docker_compose.yml pull
+
+            echo "🚀 Intentando levantar nueva versión..."
+            if docker compose -f libreria_mariela_docker_compose.yml up -d --build; then
+              echo "✅ Deploy exitoso."
+            else
+              echo "❌ Falló el build. Haciendo rollback..."
+              docker compose -f libreria_mariela_docker_compose.yml down
+              docker compose -f libreria_mariela_docker_compose.yml up -d
+              echo "♻️ Rollback completado."
+              exit 1
+            fi
           EOF
         env:
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
