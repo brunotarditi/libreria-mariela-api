@@ -26,19 +26,18 @@ jobs:
       
       - name: Verificar valores de entorno
         run: |
-          echo "DOMAIN: [$DOMAIN]"
           echo "CLIENT ID: [$CF_ACCESS_CLIENT_ID]"
           echo "SECRET: [${#CF_ACCESS_CLIENT_SECRET}] caracteres"
         env:
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
-          DOMAIN: ${{ secrets.DOMAIN }}
 
       - name: Deploy por SSH
         run: |
-          ssh -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
+          DOMAIN_CLEAN=$(echo "${{ secrets.DOMAIN }}" | tr -d '\r\n ')
+          ssh -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
               -o StrictHostKeyChecking=no \  
-              -p 2222 ${{ secrets.RASPBERRY_USER }}@$DOMAIN << 'EOF'
+              -p 2222 ${{ secrets.RASPBERRY_USER }}@$DOMAIN_CLEAN << 'EOF'
             cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose  
             docker compose down
             docker compose pull 
@@ -47,4 +46,3 @@ jobs:
         env:
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
-          DOMAIN: ${{ secrets.DOMAIN }}
