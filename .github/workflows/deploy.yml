@@ -23,6 +23,16 @@ jobs:
           curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
           chmod +x cloudflared
           sudo mv cloudflared /usr/local/bin/
+      
+      - name: Verificar valores de entorno
+        run: |
+          echo "DOMAIN: [$DOMAIN]"
+          echo "CLIENT ID: [$CF_ACCESS_CLIENT_ID]"
+          echo "SECRET: [${#CF_ACCESS_CLIENT_SECRET}] caracteres"
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          DOMAIN: ${{ secrets.DOMAIN }}
 
       - name: Deploy por SSH
         run: |
