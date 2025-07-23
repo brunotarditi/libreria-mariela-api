@@ -35,6 +35,9 @@ jobs:
 
             cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose
 
+            echo "📥 Actualizando código fuente..."
+            git pull origin main
+
             echo "🧼 Apagando contenedores actuales..."
             docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
 
