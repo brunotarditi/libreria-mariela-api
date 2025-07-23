@@ -44,18 +44,18 @@ jobs:
             cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose
 
             echo "🧼 Apagando contenedores actuales..."
-            docker compose -f libreria_mariela_docker_compose.yml down
+            docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
 
             echo "📥 Bajando imágenes actualizadas..."
-            docker compose -f libreria_mariela_docker_compose.yml pull
+            docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env pull
 
             echo "🚀 Intentando levantar nueva versión..."
-            if docker compose -f libreria_mariela_docker_compose.yml up -d --build; then
+            if docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env up -d --build; then
               echo "✅ Deploy exitoso."
             else
               echo "❌ Falló el build. Haciendo rollback..."
-              docker compose -f libreria_mariela_docker_compose.yml down
-              docker compose -f libreria_mariela_docker_compose.yml up -d
+              docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
+              docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env up -d --build
               echo "♻️ Rollback completado."
               exit 1
             fi
