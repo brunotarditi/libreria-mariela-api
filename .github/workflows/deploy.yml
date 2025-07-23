@@ -35,12 +35,13 @@ jobs:
       - name: Deploy por SSH
         run: |
           DOMAIN_CLEAN=$(echo "${{ secrets.DOMAIN }}" | tr -d '\r\n ')
+          echo "Hostname limpio: [$DOMAIN_CLEAN]"
           ssh -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
-              -o StrictHostKeyChecking=no \  
-              -p 2222 ${{ secrets.RASPBERRY_USER }}@$DOMAIN_CLEAN << 'EOF'
-            cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose  
+              -o StrictHostKeyChecking=no \
+              -p 2222 ${{ secrets.RASPBERRY_USER }}@$DOMAIN_CLEAN << EOF
+            cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose
             docker compose down
-            docker compose pull 
+            docker compose pull
             docker compose up -d --build
           EOF
         env:
