@@ -33,10 +33,12 @@ jobs:
               -p 2222 ${{ secrets.RASPBERRY_USER }}@$DOMAIN_CLEAN << EOF
             set -e
 
-            cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose
+            cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria-mariela-api
 
             echo "📥 Actualizando código fuente..."
             git pull origin main
+
+            cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose
 
             echo "🧼 Apagando contenedores actuales..."
             docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
