@@ -59,7 +59,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	health := router.Group("/healthy")
 	{
 		health.GET("", func(ctx *gin.Context) {
-			ctx.JSON(200, map[string]interface{}{"message": "success", "api": "libreria mariela", "greeting": "Hi!"})
+			ctx.JSON(200, map[string]interface{}{"message": "success", "api": "libreria mariela", "status": "200", "description": "This is the REST API for the Libreria Mariela store"})
 		})
 	}
 
