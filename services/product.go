@@ -38,26 +38,12 @@ func NewProductService(db *gorm.DB, productRepo repositories.ProductRepository, 
 
 func (s *productService) GetAllProductsWithCategoriesAndBrands() ([]responses.ProductResponse, error) {
 	products, err := s.productRepo.FindAll()
-	var response []responses.ProductResponse
+
 	if err != nil {
-		return nil, err
+		return []responses.ProductResponse{}, err
 	}
 
-	for _, product := range products {
-		resp := responses.ProductResponse{
-			ID:           product.ID,
-			Code:         product.Code,
-			Sku:          product.Sku,
-			Name:         product.Name,
-			ProfitMargin: product.ProfitMargin,
-			Description:  product.Description,
-			CategoryName: product.Category.Name,
-			BrandName:    product.Brand.Name,
-		}
-		response = append(response, resp)
-	}
-
-	return response, nil
+	return products, nil
 }
 
 func (s *productService) ExportToExcel() (*excelize.File, error) {

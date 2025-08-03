@@ -27,14 +27,11 @@ func main() {
 	appInstance := app.NewApp(dbInstance)
 
 	r := gin.New()
-
 	// Agregar middlewares esenciales manualmente
 	r.Use(gin.Recovery())
 	origins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
 	r.Use(middlewares.CORSMiddleware(origins))
-	if gin.Mode() == gin.DebugMode {
-		r.Use(gin.Logger())
-	}
+	r.Use(gin.Logger())
 
 	r.SetTrustedProxies([]string{"127.0.0.1"})
 	SetupRoutes(r, appInstance)

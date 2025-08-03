@@ -11,6 +11,7 @@ import (
 	"libreria/security"
 	"libreria/services"
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,13 +35,15 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	sellRepo := repositories.NewSellHistoryRepository(app.DB)
 	stockMovementRepo := repositories.NewStockMovementRepository(app.DB)
 	userRepo := repositories.NewUserRepositoryRepository(app.DB)
+	emailVerificationRepo := repositories.NewEmailVerificationRepositoryRepository(app.DB)
+	passwordResetRepo := repositories.NewPasswordResetRepository(app.DB)
 	// Servicios
 	productService := services.NewProductService(app.DB, productRepo, categoryOps, brandOps)
 	productStockService := services.NewProductStockService(app.DB, productStockRepo)
 	stockMovementService := services.NewStockMovementService(app.DB, stockMovementRepo)
 	purchaseService := services.NewPurchaseHistoryService(app.DB, purchaseRepo, productStockRepo, stockMovementRepo, productStockService, stockMovementService)
 	sellService := services.NewSellHistoryService(app.DB, sellRepo, productStockRepo, stockMovementRepo, productStockService, stockMovementService)
-	userService := services.NewUserService(app.DB, userRepo, roleRepo, tokenManager)
+	userService := services.NewUserService(app.DB, userRepo, roleRepo, tokenManager, emailVerificationRepo, passwordResetRepo)
 	dashboardService := services.NewDashboardService(app.DB, dashboardRepo, supplierOps, customerdOps, productOps)
 
 	// Seed inicial
@@ -59,14 +62,26 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	health := router.Group("/healthy")
 	{
 		health.GET("", func(ctx *gin.Context) {
-			ctx.JSON(200, map[string]interface{}{"message": "success", "api": "libreria mariela", "status": "200", "description": "This is the REST API for the Libreria Mariela store"})
+			ctx.JSON(http.StatusOK, map[string]interface{}{"message": "success", "api": "libreria mariela", "status": "http.StatusOK", "description": "This is the REST API for the Libreria Mariela store"})
 		})
+	}
+
+	verify := router.Group("/verify-email")
+	{
+		verify.GET("", userController.VerifyEmail())
+	}
+
+	resetpass := router.Group("/reset-password")
+	{
+		resetpass.GET("", userController.ForgotPassword())
+		resetpass.POST("", userController.ResetPassword())
 	}
 
 	public := router.Group("/auth")
 	{
 		public.POST("/login", userController.Login())
-		public.POST("/register", userController.UserRegister())
+		public.POST("/register", userController.Register())
+		public.GET("/verify-token", userController.Register())
 	}
 
 	private := router.Group("/")
