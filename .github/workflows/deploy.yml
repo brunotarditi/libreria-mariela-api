@@ -26,6 +26,8 @@ jobs:
 
       - name: Deploy por SSH
         run: |
+          echo "DOMINIO ORIGINAL: $DOMAIN"
+          echo "DOMINIO LIMPIO: [$DOMAIN_CLEAN]"
           DOMAIN_CLEAN=$(echo "${{ secrets.DOMAIN }}" | tr -d '\r\n ')
           echo "Hostname limpio: [$DOMAIN_CLEAN]"
           ssh -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
