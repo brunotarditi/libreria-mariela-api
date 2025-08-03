@@ -59,6 +59,8 @@ func AutoMigrate() {
 		&models.Role{},
 		&models.User{},
 		&models.UserRole{},
+		&models.EmailVerification{},
+		&models.PasswordReset{},
 	)
 }
 

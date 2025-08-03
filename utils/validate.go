@@ -1,57 +1,28 @@
 package utils
 
 import (
-	"libreria/models"
-
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
+	"fmt"
+	"regexp"
 )
 
-func CalculateAverageCostAndStock(db *gorm.DB, productID uint) (float64, int64, error) {
-	var productStock models.ProductStock
-	if err := db.Where("product_id = ?", productID).First(&productStock).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return 0, 0, nil
-		}
-		return 0, 0, err
-	}
-	stock := int64(productStock.Quantity)
-	if stock <= 0 {
-		return 0, 0, nil
-	}
-	var purchaseHistories []models.PurchaseHistory
-	if err := db.Where("product_id = ?", productID).Order("created_at asc").Find(&purchaseHistories).Error; err != nil {
-		return 0, 0, err
-	}
+func ValidatePassword(password string) error {
+	var (
+		minLen    = 8
+		hasUpper  = regexp.MustCompile(`[A-Z]`)
+		hasNumber = regexp.MustCompile(`[0-9]`)
+		hasSymbol = regexp.MustCompile(`[^a-zA-Z0-9]`)
+	)
 
-	var totalCost float64
-	remaining := stock
-	for _, ph := range purchaseHistories {
-		if remaining <= 0 {
-			break
-		}
-		quantity := int64(ph.Quantity)
-		if quantity > remaining {
-			quantity = remaining
-		}
-		totalCost += float64(quantity) * ph.Cost
-		remaining -= quantity
+	switch {
+	case len(password) < minLen:
+		return fmt.Errorf("la contraseña debe tener al menos 8 caracteres")
+	case !hasUpper.MatchString(password):
+		return fmt.Errorf("la contraseña debe incluir una letra mayúscula")
+	case !hasNumber.MatchString(password):
+		return fmt.Errorf("la contraseña debe incluir un número")
+	case !hasSymbol.MatchString(password):
+		return fmt.Errorf("la contraseña debe incluir un carácter especial")
+	default:
+		return nil
 	}
-
-	if stock == 0 {
-		return 0, 0, nil
-	}
-	averageCost := totalCost / float64(stock)
-
-	return averageCost, stock, nil
-}
-
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	return string(bytes), err
-}
-
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
 }

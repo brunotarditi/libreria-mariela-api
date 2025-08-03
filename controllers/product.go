@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"libreria/services"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,7 +24,7 @@ func (c *ProductController) FindAllWithCategoriesAndBrands() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(200, products)
+		ctx.JSON(http.StatusOK, products)
 	}
 }
 
@@ -50,7 +51,7 @@ func (c *ProductController) ImportFromExcel() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fileHeader, err := ctx.FormFile("file")
 		if err != nil {
-			ctx.JSON(400, gin.H{"error": "Archivo requerido"})
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Archivo requerido"})
 			return
 		}
 
@@ -63,10 +64,10 @@ func (c *ProductController) ImportFromExcel() gin.HandlerFunc {
 
 		err = c.service.ImportFromExcel(file)
 		if err != nil {
-			ctx.JSON(400, gin.H{"error": err.Error()})
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		ctx.JSON(200, gin.H{"message": "Importación exitosa"})
+		ctx.JSON(http.StatusOK, gin.H{"message": "Importación exitosa"})
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"libreria/requests"
 	"libreria/services"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -21,17 +22,17 @@ func (c *PurchaseHistoryController) CreatePurchaseHistory() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request requests.PurchaseHistoryRequest
 		if err := ctx.ShouldBindJSON(&request); err != nil {
-			ctx.JSON(400, gin.H{"error": err.Error()})
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		purchase, err := c.service.CreatePurchase(request)
 		if err != nil {
-			ctx.JSON(400, gin.H{"error": err.Error()})
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		ctx.JSON(201, purchase)
+		ctx.JSON(http.StatusCreated, purchase)
 	}
 }
 
@@ -44,7 +45,7 @@ func (c *PurchaseHistoryController) DeletePurchaseHistory() gin.HandlerFunc {
 			return
 		}
 		if err := c.service.DeletePurchase(purchaseHistoryID); err != nil {
-			ctx.JSON(400, gin.H{"error": err.Error()})
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		ctx.JSON(204, nil)

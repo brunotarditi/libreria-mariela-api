@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"libreria/services"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,6 +24,6 @@ func (c *DashboardController) GetData() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(200, response)
+		ctx.JSON(http.StatusOK, response)
 	}
 }

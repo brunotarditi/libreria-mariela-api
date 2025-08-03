@@ -40,9 +40,10 @@ func SeedInitialData(userRepo repositories.UserRepository, roleRepo repositories
 	hashedPass, _ := utils.HashPassword(password)
 
 	rootUser := models.User{
-		Username: userName,
-		Email:    email,
-		Password: hashedPass,
+		Username:   userName,
+		Email:      email,
+		Password:   hashedPass,
+		IsVerified: true,
 	}
 
 	if err := userRepo.Create(&rootUser); err != nil {

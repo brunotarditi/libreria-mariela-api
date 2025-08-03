@@ -6,6 +6,7 @@ toolchain go1.23.10
 
 require (
 	github.com/o1egl/paseto v1.0.0
+	github.com/resend/resend-go/v2 v2.21.0
 	golang.org/x/crypto v0.38.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.25.12
@@ -56,6 +57,7 @@ require (
 
 require (
 	github.com/gin-gonic/gin v1.10.0
+	github.com/google/uuid v1.6.0
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/joho/godotenv v1.5.1
