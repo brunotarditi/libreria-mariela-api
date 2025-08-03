@@ -24,17 +24,6 @@ jobs:
           chmod +x cloudflared
           sudo mv cloudflared /usr/local/bin/
 
-      - name: Debug DOMAIN
-        run: |
-          echo "DOMAIN: [${{ secrets.DOMAIN }}]"
-          DOMAIN_CLEAN=$(echo "${{ secrets.DOMAIN }}" | tr -d '\r\n ')
-          echo "DOMAIN_CLEAN: [$DOMAIN_CLEAN]"
-
-      - name: Probar conexión Cloudflared
-        run: |
-          DOMAIN_CLEAN=$(echo "${{ secrets.DOMAIN }}" | tr -d '\r\n ')
-          cloudflared access ssh --hostname $DOMAIN_CLEAN --id ${{ secrets.CF_ACCESS_CLIENT_ID }} --secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
-
       - name: Deploy por SSH
         run: |
           DOMAIN_CLEAN=$(echo "${{ secrets.DOMAIN }}" | tr -d '\r\n ')
