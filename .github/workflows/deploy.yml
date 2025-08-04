@@ -26,9 +26,12 @@ jobs:
 
       - name: Deploy por SSH
         run: |
-          ssh -o ProxyCommand="cloudflared access ssh --hostname ssh.brunotarditi.com --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
-          -o StrictHostKeyChecking=no \
-          -p 2222 bruno@ssh.brunotarditi.com << 'EOF'
+          DOMAIN_CLEAN="${{ secrets.DOMAIN }}"
+          echo "Hostname limpio: [$DOMAIN_CLEAN]"
+          ssh -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
+              -o StrictHostKeyChecking=no \
+              -p 2222 ${{ secrets.RASPBERRY_USER }}@$DOMAIN_CLEAN << EOF
+            set -e
 
             cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria-mariela-api
 
