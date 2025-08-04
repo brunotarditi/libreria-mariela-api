@@ -17,7 +17,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.RASPBERRY_SSH_KEY }}" > ~/.ssh/raspi_github
-          chmod 600 ~/.ssh/raspi_github
+          chmod 700 ~/.ssh/raspi_github
           echo "Host raspberry" >> ~/.ssh/config
           echo "  HostName ${{ secrets.DOMAIN }}" >> ~/.ssh/config
           echo "  Port 2222" >> ~/.ssh/config
