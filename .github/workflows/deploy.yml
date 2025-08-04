@@ -38,9 +38,9 @@ jobs:
         run: |
           DOMAIN_CLEAN="${{ secrets.DOMAIN }}"
           echo "Hostname limpio: [$DOMAIN_CLEAN]"
-          ssh -F ~/.ssh/config \
-              -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
-              raspberry << EOF
+          ssh -T -F ~/.ssh/config \
+          -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
+          raspberry << EOF
             set -e
 
             cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria-mariela-api
