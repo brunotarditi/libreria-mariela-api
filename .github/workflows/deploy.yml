@@ -13,10 +13,17 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.RASPBERRY_SSH_KEY }}
+      - name: Agregar clave SSH manualmente
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.RASPBERRY_SSH_KEY }}" > ~/.ssh/id_ed25519_deploy
+          chmod 600 ~/.ssh/id_ed25519_deploy
+          echo "Host raspberry" >> ~/.ssh/config
+          echo "  HostName ${{ secrets.DOMAIN }}" >> ~/.ssh/config
+          echo "  Port 2222" >> ~/.ssh/config
+          echo "  User ${{ secrets.RASPBERRY_USER }}" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/id_ed25519_deploy" >> ~/.ssh/config
+          echo "  IdentitiesOnly yes" >> ~/.ssh/config
 
       - name: Instalar cloudflared
         run: |
@@ -25,12 +32,15 @@ jobs:
           sudo mv cloudflared /usr/local/bin/
 
       - name: Deploy por SSH
+        env:
+            CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+            CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           DOMAIN_CLEAN="${{ secrets.DOMAIN }}"
           echo "Hostname limpio: [$DOMAIN_CLEAN]"
-          ssh -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
-              -o StrictHostKeyChecking=no \
-              -p 2222 ${{ secrets.RASPBERRY_USER }}@$DOMAIN_CLEAN << EOF
+          ssh -F ~/.ssh/config \
+              -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
+              raspberry << EOF
             set -e
 
             cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria-mariela-api
@@ -57,6 +67,3 @@ jobs:
               exit 1
             fi
           EOF
-        env:
-          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
