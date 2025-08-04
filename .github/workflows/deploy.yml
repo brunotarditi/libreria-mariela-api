@@ -1,4 +1,4 @@
-name: Debug SSH con Cloudflared
+name: Debug SSH con Cloudflared (sin secrets)
 
 on:
   workflow_dispatch:
@@ -11,14 +11,26 @@ jobs:
       - name: Crear ~/.ssh/config y clave
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.RASPBERRY_SSH_KEY }}" > ~/.ssh/id_ed25519_deploy
+          echo "-----BEGIN OPENSSH PRIVATE KEY-----
+          b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+          QyNTUxOQAAACC7rOuoop1l/OABtlWFf4I7cJ+wlwJbVNr0CVJSvBWT0AAAAJiwDkCbsA5A
+          mwAAAAtzc2gtZWQyNTUxOQAAACC7rOuoop1l/OABtlWFf4I7cJ+wlwJbVNr0CVJSvBWT0A
+          AAAEB2afJGCX6uUWxR2N1EGE/P4g2mpjbBY98b5M0/IXplZrus66iinWX84AG2VYV/gjtw
+          n7CXAltU2vQJUlK8FZPQAAAAEGRlcGxveUByYXNwYmVycnkBAgMEBQ==
+          -----END OPENSSH PRIVATE KEY-----" > ~/.ssh/id_ed25519_deploy
           chmod 600 ~/.ssh/id_ed25519_deploy
+
           echo "Host raspberry" >> ~/.ssh/config
-          echo "  HostName ${{ secrets.DOMAIN }}" >> ~/.ssh/config
+          echo "  HostName ssh.brunotarditi.com" >> ~/.ssh/config
           echo "  Port 2222" >> ~/.ssh/config
-          echo "  User ${{ secrets.RASPBERRY_USER }}" >> ~/.ssh/config
+          echo "  User pi" >> ~/.ssh/config
           echo "  IdentityFile ~/.ssh/id_ed25519_deploy" >> ~/.ssh/config
           echo "  IdentitiesOnly yes" >> ~/.ssh/config
+
+      - name: Limpiar known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          > ~/.ssh/known_hosts
 
       - name: Instalar cloudflared
         run: |
@@ -26,15 +38,17 @@ jobs:
           chmod +x cloudflared
           sudo mv cloudflared /usr/local/bin/
 
-      - name: Probar conexión SSH vía Cloudflare Tunnel
-        env:
-          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+      - name: Debug - Test conexión cloudflared
         run: |
-          DOMAIN_CLEAN="${{ secrets.DOMAIN }}"
-          echo "Probando conexión a $DOMAIN_CLEAN"
+          cloudflared access ssh \
+            --hostname ssh.brunotarditi.com \
+            --id 782cd197283fb389e7467507aa53487d \
+            --secret 9bc84f18913c0ef17f413568081873524508f5fc89f2a9a0a0af02f70b530a45
+
+      - name: Probar conexión SSH a Raspberry
+        run: |
           ssh -v -tt -F ~/.ssh/config \
-            -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
+            -o ProxyCommand="cloudflared access ssh --hostname ssh.brunotarditi.com --id 782cd197283fb389e7467507aa53487d.access --secret 9bc84f18913c0ef17f413568081873524508f5fc89f2a9a0a0af02f70b530a45" \
             raspberry << 'EOF'
               echo "✅ Conexión SSH establecida correctamente"
               whoami
