@@ -1,19 +1,14 @@
-name: Deploy API to Raspberry
+name: Debug SSH con Cloudflared
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  debug-ssh:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-
-      - name: Agregar clave SSH manualmente
+      - name: Crear ~/.ssh/config y clave
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.RASPBERRY_SSH_KEY }}" > ~/.ssh/id_ed25519_deploy
@@ -31,39 +26,17 @@ jobs:
           chmod +x cloudflared
           sudo mv cloudflared /usr/local/bin/
 
-      - name: Deploy por SSH
+      - name: Probar conexión SSH vía Cloudflare Tunnel
         env:
-            CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-            CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           DOMAIN_CLEAN="${{ secrets.DOMAIN }}"
-          echo "Hostname limpio: [$DOMAIN_CLEAN]"
-          ssh -F ~/.ssh/config \
-              -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
-              raspberry << EOF
-            set -e
-
-            cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria-mariela-api
-
-            echo "📥 Actualizando código fuente..."
-            git pull origin main
-
-            cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose
-
-            echo "🧼 Apagando contenedores actuales..."
-            docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
-
-            echo "📥 Bajando imágenes actualizadas..."
-            docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env pull
-
-            echo "🚀 Intentando levantar nueva versión..."
-            if docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env up -d --build; then
-              echo "✅ Deploy exitoso."
-            else
-              echo "❌ Falló el build. Haciendo rollback..."
-              docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
-              docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env up -d --build
-              echo "♻️ Rollback completado."
-              exit 1
-            fi
+          echo "Probando conexión a $DOMAIN_CLEAN"
+          ssh -v -tt -F ~/.ssh/config \
+            -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
+            raspberry << 'EOF'
+              echo "✅ Conexión SSH establecida correctamente"
+              whoami
+              hostname
           EOF
