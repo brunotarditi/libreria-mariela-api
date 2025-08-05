@@ -9,7 +9,7 @@ jobs:
   test-deploy:
     runs-on: [self-hosted]
     env:
-      APP_PATH: /srv/{{ PATH }}/appdata
+      APP_PATH: /srv/{{ secrets.PATH }}/appdata
 
     steps:
       - name: Mostrar hostname y fecha (debug)
