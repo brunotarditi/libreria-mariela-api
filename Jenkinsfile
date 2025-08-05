@@ -15,8 +15,8 @@ pipeline {
                             git pull https://$GIT_USER:$GIT_PASS@github.com/brunotarditi/libreria-mariela-api.git main
 
                             cd /srv/$PROJECT_DIR/appdata/libreria_mariela_docker_compose
-                            docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
-                            docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env pull
+                            docker-compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
+                            docker-compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env pull
                             docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env up -d --build
                         """
                     }
