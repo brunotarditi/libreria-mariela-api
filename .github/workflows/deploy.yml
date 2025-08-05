@@ -13,49 +13,32 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Agregar clave SSH manualmente
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.RASPBERRY_SSH_KEY }}" > ~/.ssh/raspi_github
-          chmod 700 ~/.ssh/raspi_github
-          echo "Host raspberry" >> ~/.ssh/config
-          echo "  HostName ${{ secrets.DOMAIN }}" >> ~/.ssh/config
-          echo "  Port 22" >> ~/.ssh/config
-          echo "  User ${{ secrets.RASPBERRY_USER }}" >> ~/.ssh/config
-          echo "  IdentityFile ~/.ssh/raspi_github" >> ~/.ssh/config
-          echo "  IdentitiesOnly yes" >> ~/.ssh/config
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.RASPBERRY_SSH_KEY }}
 
       - name: Instalar cloudflared
         run: |
           curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
           chmod +x cloudflared
           sudo mv cloudflared /usr/local/bin/
-
       - name: Deploy por SSH
-        env:
-            CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-            CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
-          DOMAIN_CLEAN="${{ secrets.DOMAIN }}"
+          DOMAIN_CLEAN=$(echo "${{ secrets.DOMAIN }}" | tr -d '\r\n ')
           echo "Hostname limpio: [$DOMAIN_CLEAN]"
-          ssh -T -F ~/.ssh/config \
-          -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
-          raspberry << EOF
+          ssh -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
+              -o StrictHostKeyChecking=no \
+              -p 22 ${{ secrets.RASPBERRY_USER }}@$DOMAIN_CLEAN << EOF
             set -e
-
             cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria-mariela-api
-
             echo "📥 Actualizando código fuente..."
             git pull origin main
-
             cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose
-
             echo "🧼 Apagando contenedores actuales..."
             docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
-
             echo "📥 Bajando imágenes actualizadas..."
             docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env pull
-
             echo "🚀 Intentando levantar nueva versión..."
             if docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env up -d --build; then
               echo "✅ Deploy exitoso."
@@ -67,3 +50,6 @@ jobs:
               exit 1
             fi
           EOF
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
