@@ -20,7 +20,7 @@ jobs:
           chmod 700 ~/.ssh/raspi_github
           echo "Host raspberry" >> ~/.ssh/config
           echo "  HostName ${{ secrets.DOMAIN }}" >> ~/.ssh/config
-          echo "  Port 2222" >> ~/.ssh/config
+          echo "  Port 22" >> ~/.ssh/config
           echo "  User ${{ secrets.RASPBERRY_USER }}" >> ~/.ssh/config
           echo "  IdentityFile ~/.ssh/raspi_github" >> ~/.ssh/config
           echo "  IdentitiesOnly yes" >> ~/.ssh/config
