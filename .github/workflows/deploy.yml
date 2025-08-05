@@ -1,55 +1,15 @@
-name: Deploy API to Raspberry
+name: Test Self-Hosted Runner
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  test-deploy:
+    runs-on: [self-hosted, linux]
 
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.RASPBERRY_SSH_KEY }}
-
-      - name: Instalar cloudflared
+      - name: Pull del último código
         run: |
-          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
-          chmod +x cloudflared
-          sudo mv cloudflared /usr/local/bin/
-      - name: Deploy por SSH
-        run: |
-          DOMAIN_CLEAN=$(echo "${{ secrets.DOMAIN }}" | tr -d '\r\n ')
-          echo "Hostname limpio: [$DOMAIN_CLEAN]"
-          ssh -o ProxyCommand="cloudflared access ssh --hostname $DOMAIN_CLEAN --id $CF_ACCESS_CLIENT_ID --secret $CF_ACCESS_CLIENT_SECRET" \
-              -o StrictHostKeyChecking=no \
-              -p 22 ${{ secrets.RASPBERRY_USER }}@$DOMAIN_CLEAN << EOF
-            set -e
-            cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria-mariela-api
-            echo "📥 Actualizando código fuente..."
-            git pull origin main
-            cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria_mariela_docker_compose
-            echo "🧼 Apagando contenedores actuales..."
-            docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
-            echo "📥 Bajando imágenes actualizadas..."
-            docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env pull
-            echo "🚀 Intentando levantar nueva versión..."
-            if docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env up -d --build; then
-              echo "✅ Deploy exitoso."
-            else
-              echo "❌ Falló el build. Haciendo rollback..."
-              docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
-              docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env up -d --build
-              echo "♻️ Rollback completado."
-              exit 1
-            fi
-          EOF
-        env:
-          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria-mariela-api
+          git pull origin main
