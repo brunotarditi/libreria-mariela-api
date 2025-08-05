@@ -1,15 +1,43 @@
-name: Test Self-Hosted Runner
+name: Deploy API to Raspberry
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   test-deploy:
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted]
+    env:
+      APP_PATH: /srv/{{ PATH }}/appdata
 
     steps:
-      - name: Pull del último código
+      - name: Mostrar hostname y fecha (debug)
         run: |
-          cd /srv/${{ secrets.PATH_TO_APPDATA }}/appdata/libreria-mariela-api
+          echo "🖥️ Corriendo en: $(hostname)"
+          echo "📅 Fecha: $(date)"
+
+      - name: Navegar al repo y actualizar
+        run: |
+          set -e
+          cd $APP_PATH/libreria-mariela-api
+          echo "📥 Haciendo pull del repo..."
           git pull origin main
+
+      - name: Ir al folder de docker-compose y hacer deploy
+        run: |
+          cd $APP_PATH/libreria_mariela_docker_compose
+          
+          echo "🧼 Apagando contenedores..."
+          docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env down
+
+          echo "📦 Descargando imágenes..."
+          docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env pull
+
+          echo "🚀 Levantando contenedores..."
+          if docker compose -f libreria_mariela_docker_compose.yml --env-file libreria_mariela_docker_compose.env up -d --build; then
+              echo "✅ ¡Deploy exitoso!"
+          else
+              echo "❌ Falló el build. Rollback manual necesario o revisar el build log."
+              exit 1
+          fi
