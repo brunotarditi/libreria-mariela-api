@@ -33,7 +33,7 @@ func main() {
 	r.Use(middlewares.CORSMiddleware(origins))
 	r.Use(gin.Logger())
 
-	r.SetTrustedProxies([]string{"127.0.0.1"})
+	r.SetTrustedProxies(nil)
 	SetupRoutes(r, appInstance)
 
 	r.Run(":8080")
