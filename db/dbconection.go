@@ -56,11 +56,6 @@ func AutoMigrate() {
 		&models.ProductStock{},
 		&models.StockMovement{},
 		&models.AuditLog{},
-		&models.Role{},
-		&models.User{},
-		&models.UserRole{},
-		&models.EmailVerification{},
-		&models.PasswordReset{},
 	)
 }
 
