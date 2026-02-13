@@ -45,6 +45,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	sellService := services.NewSellHistoryService(app.DB, sellRepo, productStockRepo, stockMovementRepo, productStockService, stockMovementService)
 	userService := services.NewUserService(app.DB, userRepo, roleRepo, tokenManager, emailVerificationRepo, passwordResetRepo)
 	dashboardService := services.NewDashboardService(app.DB, dashboardRepo, supplierOps, customerdOps, productOps)
+	budgetService := services.NewBudgetService(app.DB)
 
 	// Seed inicial
 	if err := services.SeedInitialData(userRepo, roleRepo); err != nil {
@@ -56,8 +57,14 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	sellController := controllers.NewSellHistoryControllerController(sellService)
 	userController := controllers.NewUserControllerController(userService)
 	dashboardController := controllers.NewDashboardController(dashboardService)
+	budgetController := controllers.NewBudgetController(budgetService)
 
 	router := r.Group("/api/v1")
+
+	budget := router.Group("/budget")
+	{
+		budget.GET("", budgetController.GetBudget())
+	}
 
 	health := router.Group("/healthy")
 	{
@@ -177,6 +184,13 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 		dashboard := private.Group("/dashboard")
 		{
 			dashboard.GET("", dashboardController.GetData())
+		}
+
+		budges := private.Group("/budges")
+		{
+			ops := common.NewGormOperations[models.Budget](app.DB)
+			budges.POST("", middlewares.RequireAnyRole("WRITE", "ADMIN", "ROOT"), common.Create[models.Budget, requests.BudgetRequest](ops))
+			budges.DELETE("/:id", middlewares.RequireAnyRole("ADMIN", "ROOT"), common.Delete(ops))
 		}
 
 	}
