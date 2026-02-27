@@ -1,7 +1,7 @@
 # ✏️ Librería Mariela API - Sistema para negocio familiar
 
-![Go Version](https://img.shields.io/badge/go-1.24.0-blue.svg)
-![Gin Framework](https://img.shields.io/badge/gin-v1.11.0-blue.svg)
+![Go Version](https://img.shields.io/badge/go-1.23.0-blue.svg)
+![Gin Framework](https://img.shields.io/badge/gin-v1.10.0-blue.svg)
 ![PostgreSQL](https://img.shields.io/badge/postgresql-v1.6.0-blue.svg)
 
 **Librería Mariela API** es la api para el negocio Librería Mariela, este negocio de útiles escolares actualmente cuenta con módulos de inventario, importar productos desde una hoja de excel y llevar el control del stock de los productos.
@@ -10,7 +10,7 @@
 
 ## 🛠️ Stack Tecnológico
 
-- **Lenguaje**: Go (1.24.0)
+- **Lenguaje**: Go (1.23.0)
 - **Web Framework**: Gin
 - **ORM**: GORM
 - **Base de Datos**: PostgreSQL
