@@ -1,4 +1,4 @@
-# 🏔️ Librería Mariela API - Sistema para negocio familiar
+# ✏️ Librería Mariela API - Sistema para negocio familiar
 
 ![Go Version](https://img.shields.io/badge/go-1.24.0-blue.svg)
 ![Gin Framework](https://img.shields.io/badge/gin-v1.11.0-blue.svg)
