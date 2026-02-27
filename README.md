@@ -28,7 +28,7 @@
 
    ```bash
    git clone https://github.com/brunotarditi/libreria-mariela-api.git
-   cd peak-auth
+   cd libreria-mariela-api
    ```
 
 2. **Instalar dependencias:**
