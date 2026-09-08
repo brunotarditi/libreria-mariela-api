@@ -44,8 +44,14 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	sellController := controllers.NewSellHistoryControllerController(sellService)
 	dashboardController := controllers.NewDashboardController(dashboardService)
 	budgetController := controllers.NewBudgetController(budgetService)
+	authController := controllers.NewAuthController()
 
 	router := r.Group("/api/v1")
+
+	auth := router.Group("/auth")
+	{
+		auth.POST("/exchange", authController.ExchangeToken)
+	}
 
 	budget := router.Group("/budget")
 	{
