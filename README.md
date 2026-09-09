@@ -133,6 +133,7 @@ Configura las siguientes variables según tu entorno:
 | `DB_NAME` | Nombre de la base de datos | `libreria_mariela` |
 | `ALLOWED_ORIGINS` | Orígenes permitidos para CORS (separados por coma) | `http://localhost:4200,http://localhost:3000` |
 | `PEAK_AUTH_URL` | URL base del servidor de autenticación Peak Auth | `http://localhost:9009` |
+| `PEAK_AUTH_CLIENT_ID` | Identificador de cliente registrado en Peak Auth | `libreria-mariela` |
 | `PEAK_AUTH_CLIENT_SECRET` | Secreto de cliente OAuth registrado en Peak Auth | `tu_client_secret` |
 | `ROOT_EMAIL` | *(Opcional - Docker)* Email de administrador para pgAdmin | `admin@admin.com` |
 | `ROOT_PASSWORD` | *(Opcional - Docker)* Contraseña para pgAdmin | `admin123` |
