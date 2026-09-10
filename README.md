@@ -135,8 +135,7 @@ Configura las siguientes variables según tu entorno:
 | `PEAK_AUTH_URL` | URL base del servidor de autenticación Peak Auth | `http://localhost:9009` |
 | `PEAK_AUTH_CLIENT_ID` | Identificador de cliente registrado en Peak Auth | `libreria-mariela` |
 | `PEAK_AUTH_CLIENT_SECRET` | Secreto de cliente OAuth registrado en Peak Auth | `tu_client_secret` |
-| `ROOT_EMAIL` | *(Opcional - Docker)* Email de administrador para pgAdmin | `admin@admin.com` |
-| `ROOT_PASSWORD` | *(Opcional - Docker)* Contraseña para pgAdmin | `admin123` |
+| `PEAK_AUTH_PUBLIC_KEY` | Clave pública RSA de Peak Auth (formato PEM o ruta al archivo) | `"-----BEGIN PUBLIC KEY-----\n..."` |
 
 ---
 
@@ -168,21 +167,19 @@ Configura las siguientes variables según tu entorno:
 
 ### Opción 2: Despliegue con Docker Compose
 
-Docker Compose levantará automáticamente la API de Go, la base de datos PostgreSQL y la interfaz web de pgAdmin.
+Docker Compose permite construir y ejecutar el contenedor de la API fácilmente sin lidiar con comandos largos:
 
 1. **Asegurar el archivo `.env` configurado.**
 
-2. **Construir y levantar los contenedores:**
+2. **Construir y levantar el contenedor de la API:**
    ```bash
    docker compose up --build -d
    ```
 
-3. **Servicios disponibles:**
+3. **Servicio disponible:**
    - **API REST**: `http://localhost:8080`
-   - **Base de datos PostgreSQL**: `localhost:5432`
-   - **pgAdmin 4**: `http://localhost:5050` (accede con `ROOT_EMAIL` y `ROOT_PASSWORD`)
 
-4. **Detener los servicios:**
+4. **Detener el servicio:**
    ```bash
    docker compose down
    ```
