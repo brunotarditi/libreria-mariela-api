@@ -9,10 +9,9 @@ import (
 	"libreria/repositories"
 	"libreria/requests"
 	"libreria/services"
-	"log"
 	"net/http"
-	"os"
 
+	peakauthgin "github.com/brunotarditi/peak-auth/sdk/go/gin"
 	"github.com/gin-gonic/gin"
 )
 
@@ -46,7 +45,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	sellController := controllers.NewSellHistoryControllerController(sellService)
 	dashboardController := controllers.NewDashboardController(dashboardService)
 	budgetController := controllers.NewBudgetController(budgetService)
-	authController := controllers.NewAuthController()
+	authController := controllers.NewAuthController(app.PeakAuthClient)
 
 	router := r.Group("/api/v1")
 
@@ -67,18 +66,8 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 		})
 	}
 
-	// Cargar clave pública de Peak Auth para validar tokens de la aplicación
-	pubKey, err := middlewares.LoadRSAPublicKey()
-	expectedAppID := os.Getenv("PEAK_AUTH_CLIENT_ID")
-	if expectedAppID == "" {
-		expectedAppID = "libreria-mariela"
-	}
-	if err != nil {
-		log.Printf("ADVERTENCIA: No se pudo cargar la clave pública de Peak Auth: %v", err)
-	}
-
 	private := router.Group("/")
-	private.Use(middlewares.AuthMiddleware(pubKey, expectedAppID))
+	private.Use(peakauthgin.Middleware(app.PeakAuthClient))
 	private.Use(middlewares.AuditMiddleware(app.DB))
 
 	{

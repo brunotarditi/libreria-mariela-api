@@ -1,4 +1,4 @@
-FROM golang:1.27-bookworm AS builder
+FROM cgr.dev/chainguard/go:latest-dev AS builder
 WORKDIR /app
 COPY . .
 RUN go mod download

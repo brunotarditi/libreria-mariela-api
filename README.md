@@ -135,7 +135,6 @@ Configura las siguientes variables según tu entorno:
 | `PEAK_AUTH_URL` | URL base del servidor de autenticación Peak Auth | `http://localhost:9009` |
 | `PEAK_AUTH_CLIENT_ID` | Identificador de cliente registrado en Peak Auth | `libreria-mariela` |
 | `PEAK_AUTH_CLIENT_SECRET` | Secreto de cliente OAuth registrado en Peak Auth | `tu_client_secret` |
-| `PEAK_AUTH_PUBLIC_KEY` | Clave pública RSA de Peak Auth (formato PEM o ruta al archivo) | `"-----BEGIN PUBLIC KEY-----\n..."` |
 
 ---
 

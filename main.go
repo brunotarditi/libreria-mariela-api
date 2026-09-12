@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/brunotarditi/peak-auth/sdk/go"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -24,7 +25,27 @@ func main() {
 	dbInstance := db.ConnectDB()
 	defer db.DisconnectDB()
 	db.AutoMigrate()
-	appInstance := app.NewApp(dbInstance)
+
+	peakAuthURL := os.Getenv("PEAK_AUTH_URL")
+	if peakAuthURL == "" {
+		peakAuthURL = "http://localhost:8080"
+	}
+	clientID := os.Getenv("PEAK_AUTH_CLIENT_ID")
+	if clientID == "" {
+		clientID = "libreria-mariela"
+	}
+	clientSecret := os.Getenv("PEAK_AUTH_CLIENT_SECRET")
+
+	peakAuthClient, err := peakauth.New(peakauth.Config{
+		IssuerURL:    peakAuthURL,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+	})
+	if err != nil {
+		log.Fatalf("Error inicializando Peak Auth SDK: %v", err)
+	}
+
+	appInstance := app.NewApp(dbInstance, peakAuthClient)
 
 	r := gin.New()
 	// Agregar middlewares esenciales manualmente
