@@ -68,6 +68,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 
 	private := router.Group("/")
 	private.Use(peakauthgin.Middleware(app.PeakAuthClient))
+	private.Use(middlewares.RoleMiddleware())
 	private.Use(middlewares.AuditMiddleware(app.DB))
 
 	{
