@@ -17,15 +17,17 @@ func NewAuthController(client *peakauth.Client) *AuthController {
 
 func (ctrl *AuthController) ExchangeToken(c *gin.Context) {
 	var req struct {
-		Code string `json:"code" binding:"required"`
+		Code         string `json:"code" binding:"required"`
+		CodeVerifier string `json:"code_verifier" binding:"required"`
+		RedirectURI  string `json:"redirect_uri" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "El código OAuth es requerido"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Faltan parámetros requeridos (code, code_verifier, redirect_uri)"})
 		return
 	}
 
-	tokenResp, err := ctrl.client.ExchangeCode(c.Request.Context(), req.Code, "")
+	tokenResp, err := ctrl.client.ExchangeCode(c.Request.Context(), req.Code, req.CodeVerifier, req.RedirectURI)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
