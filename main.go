@@ -48,6 +48,7 @@ func main() {
 	appInstance := app.NewApp(dbInstance, peakAuthClient)
 
 	r := gin.New()
+	r.MaxMultipartMemory = 8 << 20 // 8 MB límite para subida de archivos
 	// Agregar middlewares esenciales manualmente
 	r.Use(gin.Recovery())
 	origins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")

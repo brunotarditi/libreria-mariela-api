@@ -172,7 +172,13 @@ func (s *productService) ExportToExcel() (*excelize.File, error) {
 	return f, nil
 }
 
-func (s *productService) ImportFromExcel(reader io.Reader) error {
+func (s *productService) ImportFromExcel(reader io.Reader) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error al procesar el archivo Excel (posible archivo corrupto o inválido): %v", r)
+		}
+	}()
+
 	f, err := excelize.OpenReader(reader)
 	if err != nil {
 		return fmt.Errorf("no se pudo abrir el archivo: %v", err)

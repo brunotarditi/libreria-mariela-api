@@ -1,7 +1,7 @@
 package services
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/johnfercher/maroto/v2"
 	"gorm.io/gorm"
@@ -48,12 +48,12 @@ func (s *budgetService) GeneratePDF() ([]byte, error) {
 
 	err := m.RegisterHeader(getPageHeader())
 	if err != nil {
-		log.Fatal(err.Error())
+		return nil, fmt.Errorf("error al registrar encabezado del PDF: %w", err)
 	}
 
 	err = m.RegisterFooter(getPageFooter())
 	if err != nil {
-		log.Fatal(err.Error())
+		return nil, fmt.Errorf("error al registrar pie de página del PDF: %w", err)
 	}
 
 	m.AddRows(text.NewRow(10, "Presupuesto", props.Text{
@@ -82,7 +82,7 @@ func (s *budgetService) GeneratePDF() ([]byte, error) {
 
 	document, err := m.Generate()
 	if err != nil {
-		log.Fatal(err.Error())
+		return nil, fmt.Errorf("error al generar documento PDF: %w", err)
 	}
 	return document.GetBytes(), nil
 }

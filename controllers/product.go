@@ -3,6 +3,7 @@ package controllers
 import (
 	"libreria/services"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -52,6 +53,16 @@ func (c *ProductController) ImportFromExcel() gin.HandlerFunc {
 		fileHeader, err := ctx.FormFile("file")
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Archivo requerido"})
+			return
+		}
+
+		if !strings.HasSuffix(strings.ToLower(fileHeader.Filename), ".xlsx") {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Formato inválido: solo se permiten archivos .xlsx"})
+			return
+		}
+
+		if fileHeader.Size > 8<<20 {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "El archivo excede el tamaño máximo permitido (8 MB)"})
 			return
 		}
 

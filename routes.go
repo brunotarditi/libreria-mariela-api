@@ -54,11 +54,6 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 		auth.POST("/exchange", authController.ExchangeToken)
 	}
 
-	budget := router.Group("/budget")
-	{
-		budget.GET("", budgetController.GetBudget())
-	}
-
 	health := router.Group("/healthy")
 	{
 		health.GET("", func(ctx *gin.Context) {
@@ -149,6 +144,11 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 		dashboard := private.Group("/dashboard")
 		{
 			dashboard.GET("", dashboardController.GetData())
+		}
+
+		budget := private.Group("/budget")
+		{
+			budget.GET("", budgetController.GetBudget())
 		}
 
 		budges := private.Group("/budges")
