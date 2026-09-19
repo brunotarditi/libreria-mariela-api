@@ -11,6 +11,7 @@ import (
 
 type ProductStockService interface {
 	ApplyMovement(productStock models.ProductStock, movementType int) error
+	WithTx(tx *gorm.DB) ProductStockService
 }
 
 type productStockService struct {
@@ -22,41 +23,39 @@ func NewProductStockService(db *gorm.DB, stockRepo repositories.ProductStockRepo
 	return &productStockService{db: db, productStockRepo: stockRepo}
 }
 
-func (s *productStockService) ApplyMovement(productStock models.ProductStock, movementType int) error {
+func (s *productStockService) WithTx(tx *gorm.DB) ProductStockService {
+	return &productStockService{
+		db:               tx,
+		productStockRepo: s.productStockRepo.WithTx(tx),
+	}
+}
 
-	tx := s.db.Begin()
+func (s *productStockService) ApplyMovement(productStock models.ProductStock, movementType int) error {
 	stockExist, err := s.productStockRepo.FindByID(productStock.ProductID)
 	if err != nil && err != gorm.ErrRecordNotFound {
-		tx.Rollback()
 		return err
 	}
 	if err == gorm.ErrRecordNotFound {
-
 		if err := s.productStockRepo.Create(&productStock); err != nil {
-			tx.Rollback()
 			return err
 		}
-
-		tx.Commit()
-		return nil
-	} else {
-		if movementType == int(constants.STOCK_MOVEMENT_TYPE_IN) {
-			stockExist.Quantity += productStock.Quantity
-		}
-
-		if movementType == int(constants.STOCK_MOVEMENT_TYPE_OUT) {
-			stockExist.Quantity -= productStock.Quantity
-		}
-
-		if stockExist.Quantity < 0 {
-			return fmt.Errorf("stock insuficiente para producto %d", productStock.ProductID)
-		}
-
-		if err := s.productStockRepo.Update(&stockExist); err != nil {
-			tx.Rollback()
-			return err
-		}
-		tx.Commit()
 		return nil
 	}
+
+	if movementType == int(constants.STOCK_MOVEMENT_TYPE_IN) {
+		stockExist.Quantity += productStock.Quantity
+	}
+
+	if movementType == int(constants.STOCK_MOVEMENT_TYPE_OUT) {
+		stockExist.Quantity -= productStock.Quantity
+	}
+
+	if stockExist.Quantity < 0 {
+		return fmt.Errorf("stock insuficiente para producto %d", productStock.ProductID)
+	}
+
+	if err := s.productStockRepo.Update(&stockExist); err != nil {
+		return err
+	}
+	return nil
 }

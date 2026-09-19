@@ -9,6 +9,7 @@ import (
 
 type StockMovementService interface {
 	ApplyMovement(stockMovement models.StockMovement) error
+	WithTx(tx *gorm.DB) StockMovementService
 }
 
 type stockMovementService struct {
@@ -20,14 +21,13 @@ func NewStockMovementService(db *gorm.DB, stockRepo repositories.StockMovementRe
 	return &stockMovementService{db: db, stockMovementRepo: stockRepo}
 }
 
-func (s *stockMovementService) ApplyMovement(stockMovement models.StockMovement) error {
-
-	tx := s.db.Begin()
-
-	if err := s.stockMovementRepo.Create(&stockMovement); err != nil {
-		tx.Rollback()
-		return err
+func (s *stockMovementService) WithTx(tx *gorm.DB) StockMovementService {
+	return &stockMovementService{
+		db:                tx,
+		stockMovementRepo: s.stockMovementRepo.WithTx(tx),
 	}
-	tx.Commit()
-	return nil
+}
+
+func (s *stockMovementService) ApplyMovement(stockMovement models.StockMovement) error {
+	return s.stockMovementRepo.Create(&stockMovement)
 }

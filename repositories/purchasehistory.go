@@ -10,6 +10,7 @@ type PurchaseHistoryRepository interface {
 	Create(purchase *models.PurchaseHistory) error
 	FindByID(purchaseHistoryID uint64) (models.PurchaseHistory, error)
 	Delete(purchaseHistoryID uint64) error
+	WithTx(tx *gorm.DB) PurchaseHistoryRepository
 }
 
 type purchaseHistoryRepository struct {
@@ -18,6 +19,10 @@ type purchaseHistoryRepository struct {
 
 func NewPurchaseHistoryRepository(db *gorm.DB) PurchaseHistoryRepository {
 	return &purchaseHistoryRepository{db: db}
+}
+
+func (r *purchaseHistoryRepository) WithTx(tx *gorm.DB) PurchaseHistoryRepository {
+	return &purchaseHistoryRepository{db: tx}
 }
 
 func (r *purchaseHistoryRepository) Create(purchase *models.PurchaseHistory) error {

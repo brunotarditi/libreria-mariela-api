@@ -4,6 +4,7 @@ import (
 	"libreria/requests"
 	"libreria/services"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +38,12 @@ func (c *SellHistoryController) CreateSellHistory() gin.HandlerFunc {
 func (c *SellHistoryController) DeleteSellHistory() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id := ctx.Param("id")
-		if err := c.service.DeleteSell(id); err != nil {
+		sellHistoryID, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido: debe ser numérico"})
+			return
+		}
+		if err := c.service.DeleteSell(sellHistoryID); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

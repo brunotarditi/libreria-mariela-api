@@ -13,7 +13,7 @@ import (
 
 type SellHistoryService interface {
 	CreateSell(request requests.SellHistoryRequest) (models.SellHistory, error)
-	DeleteSell(id string) error
+	DeleteSell(id uint64) error
 }
 
 type sellHistoryService struct {
@@ -41,62 +41,63 @@ func (s *sellHistoryService) CreateSell(request requests.SellHistoryRequest) (mo
 		return models.SellHistory{}, err
 	}
 
-	averageCost, stock, err := utils.CalculateAverageCostAndStock(s.db, request.ProductID)
+	var sell models.SellHistory
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		txSellRepo := s.sellRepo.WithTx(tx)
+		txProductStockService := s.productStockService.WithTx(tx)
+		txStockMovementService := s.stockMovementService.WithTx(tx)
+
+		averageCost, stock, err := utils.CalculateAverageCostAndStock(tx, request.ProductID)
+		if err != nil {
+			return err
+		}
+
+		if stock < int64(request.Quantity) {
+			return fmt.Errorf("stock insuficiente para producto %d", request.ProductID)
+		}
+
+		var product models.Product
+		if err := tx.First(&product, request.ProductID).Error; err != nil {
+			return err
+		}
+
+		model, err := request.ToModel()
+		if err != nil {
+			return err
+		}
+		sell = model
+		sell.AverageCost = averageCost
+		sell.Price = averageCost * (1 + product.ProfitMargin/100)
+
+		if err := txSellRepo.Create(&sell); err != nil {
+			return err
+		}
+
+		return applyMovementFlow(txProductStockService, txStockMovementService, request.ProductID, request.Quantity, constants.STOCK_MOVEMENT_TYPE_OUT, sell.ID, "Nueva venta")
+	})
 
 	if err != nil {
 		return models.SellHistory{}, err
 	}
 
-	if stock < int64(request.Quantity) {
-		return models.SellHistory{}, fmt.Errorf("stock insuficiente para producto %d", request.ProductID)
-	}
-
-	var product models.Product
-	if err := s.db.First(&product, request.ProductID).Error; err != nil {
-		return models.SellHistory{}, err
-	}
-
-	sell, err := request.ToModel()
-	if err != nil {
-		return models.SellHistory{}, err
-	}
-
-	sell.AverageCost = averageCost
-	sell.Price = averageCost * (1 + product.ProfitMargin/100)
-
-	tx := s.db.Begin()
-	if err := s.sellRepo.Create(&sell); err != nil {
-		tx.Rollback()
-		return models.SellHistory{}, err
-	}
-
-	if err := applyMovementFlow(s.productStockService, s.stockMovementService, request.ProductID, request.Quantity, constants.STOCK_MOVEMENT_TYPE_OUT, sell.ID, "Nueva venta"); err != nil {
-		tx.Rollback()
-		return models.SellHistory{}, err
-	}
-
-	tx.Commit()
 	return sell, nil
 }
 
-func (s *sellHistoryService) DeleteSell(id string) error {
-	tx := s.db.Begin()
-	sell, err := s.sellRepo.FindByID(id)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
+func (s *sellHistoryService) DeleteSell(id uint64) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		txSellRepo := s.sellRepo.WithTx(tx)
+		txProductStockService := s.productStockService.WithTx(tx)
+		txStockMovementService := s.stockMovementService.WithTx(tx)
 
-	if err := applyMovementFlow(s.productStockService, s.stockMovementService, sell.ProductID, sell.Quantity, constants.STOCK_MOVEMENT_TYPE_IN, sell.ID, "Devolución de venta"); err != nil {
-		tx.Rollback()
-		return err
-	}
+		sell, err := txSellRepo.FindByID(id)
+		if err != nil {
+			return err
+		}
 
-	if err := s.sellRepo.Delete(id); err != nil {
-		tx.Rollback()
-		return err
-	}
+		if err := applyMovementFlow(txProductStockService, txStockMovementService, sell.ProductID, sell.Quantity, constants.STOCK_MOVEMENT_TYPE_IN, sell.ID, "Devolución de venta"); err != nil {
+			return err
+		}
 
-	tx.Commit()
-	return nil
+		return txSellRepo.Delete(id)
+	})
 }

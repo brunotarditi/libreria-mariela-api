@@ -10,6 +10,7 @@ type ProductStockRepository interface {
 	Create(stock *models.ProductStock) error
 	FindByID(id uint) (models.ProductStock, error)
 	Update(productstock *models.ProductStock) error
+	WithTx(tx *gorm.DB) ProductStockRepository
 }
 
 type productStockRepository struct {
@@ -18,6 +19,10 @@ type productStockRepository struct {
 
 func NewProductStockRepository(db *gorm.DB) ProductStockRepository {
 	return &productStockRepository{db: db}
+}
+
+func (r *productStockRepository) WithTx(tx *gorm.DB) ProductStockRepository {
+	return &productStockRepository{db: tx}
 }
 
 func (r *productStockRepository) Create(productstock *models.ProductStock) error {

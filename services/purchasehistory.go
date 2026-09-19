@@ -44,39 +44,40 @@ func (s *purchaseHistoryService) CreatePurchase(request requests.PurchaseHistory
 		return models.PurchaseHistory{}, err
 	}
 
-	tx := s.db.Begin()
-	if err := s.purchaseRepo.Create(&purchase); err != nil {
-		tx.Rollback()
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		txPurchaseRepo := s.purchaseRepo.WithTx(tx)
+		txProductStockService := s.productStockService.WithTx(tx)
+		txStockMovementService := s.stockMovementService.WithTx(tx)
+
+		if err := txPurchaseRepo.Create(&purchase); err != nil {
+			return err
+		}
+
+		return applyMovementFlow(txProductStockService, txStockMovementService, request.ProductID, request.Quantity, constants.STOCK_MOVEMENT_TYPE_IN, purchase.ID, "Nueva compra")
+	})
+
+	if err != nil {
 		return models.PurchaseHistory{}, err
 	}
 
-	if err := applyMovementFlow(s.productStockService, s.stockMovementService, request.ProductID, request.Quantity, constants.STOCK_MOVEMENT_TYPE_IN, purchase.ID, "Nueva compra"); err != nil {
-		tx.Rollback()
-		return models.PurchaseHistory{}, err
-	}
-
-	tx.Commit()
 	return purchase, nil
 }
 
 func (s *purchaseHistoryService) DeletePurchase(id uint64) error {
-	tx := s.db.Begin()
-	purchase, err := s.purchaseRepo.FindByID(id)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		txPurchaseRepo := s.purchaseRepo.WithTx(tx)
+		txProductStockService := s.productStockService.WithTx(tx)
+		txStockMovementService := s.stockMovementService.WithTx(tx)
 
-	if err := applyMovementFlow(s.productStockService, s.stockMovementService, purchase.ProductID, purchase.Quantity, constants.STOCK_MOVEMENT_TYPE_OUT, purchase.ID, "Devolución de compra"); err != nil {
-		tx.Rollback()
-		return err
-	}
+		purchase, err := txPurchaseRepo.FindByID(id)
+		if err != nil {
+			return err
+		}
 
-	if err := s.purchaseRepo.Delete(id); err != nil {
-		tx.Rollback()
-		return err
-	}
+		if err := applyMovementFlow(txProductStockService, txStockMovementService, purchase.ProductID, purchase.Quantity, constants.STOCK_MOVEMENT_TYPE_OUT, purchase.ID, "Devolución de compra"); err != nil {
+			return err
+		}
 
-	tx.Commit()
-	return nil
+		return txPurchaseRepo.Delete(id)
+	})
 }

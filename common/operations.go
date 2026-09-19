@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -41,7 +42,11 @@ func (ops *GormOperations[T]) FindAll() ([]T, error) {
 
 func (ops *GormOperations[T]) FindByID(id string) (T, error) {
 	var model T
-	err := ops.db.First(&model, id).Error
+	parsedID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		return model, fmt.Errorf("ID inválido: debe ser numérico")
+	}
+	err = ops.db.First(&model, parsedID).Error
 	return model, err
 }
 
@@ -77,7 +82,11 @@ func (ops *GormOperations[T]) Update(model T) (T, error) {
 
 func (ops *GormOperations[T]) Delete(id string) error {
 	var model T
-	return ops.db.Delete(&model, id).Error
+	parsedID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		return fmt.Errorf("ID inválido: debe ser numérico")
+	}
+	return ops.db.Delete(&model, parsedID).Error
 }
 
 func (ops *GormOperations[T]) Pluck(field string) ([]string, error) {
