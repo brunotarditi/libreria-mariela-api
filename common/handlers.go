@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"libreria/requests"
 	"libreria/responses"
+	"libreria/utils"
 	"net/http"
 	"strconv"
 
@@ -205,6 +206,49 @@ func BulkDelete[T any](ops Operations[T]) gin.HandlerFunc {
 			Message:      message,
 			DeletedCount: deletedCount,
 		})
+	}
+}
+
+type ExcelExportable interface {
+	ExcelHeaders() []string
+	ExcelRow() []interface{}
+}
+
+func Export[T ExcelExportable](ops Operations[T], entityName string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		items, err := ops.FindAll()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		var headers []string
+		var rows [][]interface{}
+
+		if len(items) > 0 {
+			headers = items[0].ExcelHeaders()
+			rows = make([][]interface{}, len(items))
+			for i, item := range items {
+				rows[i] = item.ExcelRow()
+			}
+		} else {
+			var dummy T
+			headers = dummy.ExcelHeaders()
+			rows = [][]interface{}{}
+		}
+
+		sheetName := utils.CapitalizeFirst(entityName)
+		file, err := utils.BuildExcel(sheetName, headers, rows)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error al generar el archivo Excel: " + err.Error()})
+			return
+		}
+
+		filename := fmt.Sprintf("%s_export.xlsx", entityName)
+		if err := utils.StreamExcel(c, file, filename); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error al transmitir el archivo Excel: " + err.Error()})
+			return
+		}
 	}
 }
 

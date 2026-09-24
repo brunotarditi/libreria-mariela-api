@@ -9,13 +9,20 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 type mockOperations struct {
 	deleteManyFunc func(ids []uint) (int64, error)
+	findAllFunc    func() ([]DummyModel, error)
 }
 
-func (m *mockOperations) FindAll() ([]DummyModel, error)                         { return nil, nil }
+func (m *mockOperations) FindAll() ([]DummyModel, error) {
+	if m.findAllFunc != nil {
+		return m.findAllFunc()
+	}
+	return nil, nil
+}
 func (m *mockOperations) FindByID(id string) (DummyModel, error)                { return DummyModel{}, nil }
 func (m *mockOperations) Paginated(offset, size int, options QueryOptions) ([]DummyModel, error) {
 	return nil, nil
@@ -182,5 +189,58 @@ func TestBulkDeleteHandler_ServerError(t *testing.T) {
 
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("expected status 500, got %d, body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestExportHandler(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockOps := &mockOperations{
+		findAllFunc: func() ([]DummyModel, error) {
+			return []DummyModel{
+				{ID: 1, Name: "Item 1"},
+				{ID: 2, Name: "Item 2"},
+			}, nil
+		},
+	}
+
+	r := gin.New()
+	r.GET("/export", Export[DummyModel](mockOps, "dummies"))
+
+	req, _ := http.NewRequest(http.MethodGet, "/export", nil)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d, body: %s", w.Code, w.Body.String())
+	}
+
+	expectedContentType := "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	if w.Header().Get("Content-Type") != expectedContentType {
+		t.Errorf("expected Content-Type %q, got %q", expectedContentType, w.Header().Get("Content-Type"))
+	}
+
+	expectedDisposition := `attachment; filename="dummies_export.xlsx"`
+	if w.Header().Get("Content-Disposition") != expectedDisposition {
+		t.Errorf("expected Content-Disposition %q, got %q", expectedDisposition, w.Header().Get("Content-Disposition"))
+	}
+
+	reader, err := excelize.OpenReader(bytes.NewReader(w.Body.Bytes()))
+	if err != nil {
+		t.Fatalf("failed to open returned Excel buffer: %v", err)
+	}
+	defer reader.Close()
+
+	header1, _ := reader.GetCellValue("Dummies", "A1")
+	header2, _ := reader.GetCellValue("Dummies", "B1")
+	if header1 != "ID" || header2 != "NOMBRE" {
+		t.Errorf("expected headers ID, NOMBRE, got %q, %q", header1, header2)
+	}
+
+	val1, _ := reader.GetCellValue("Dummies", "A2")
+	val2, _ := reader.GetCellValue("Dummies", "B2")
+	if val1 != "1" || val2 != "Item 1" {
+		t.Errorf("expected row 2 to be 1, Item 1, got %q, %q", val1, val2)
 	}
 }

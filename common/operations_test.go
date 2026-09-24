@@ -9,6 +9,14 @@ type DummyModel struct {
 	Name string
 }
 
+func (d DummyModel) ExcelHeaders() []string {
+	return []string{"ID", "NOMBRE"}
+}
+
+func (d DummyModel) ExcelRow() []interface{} {
+	return []interface{}{d.ID, d.Name}
+}
+
 func TestOperations_FindByID_RejectsNonNumericID(t *testing.T) {
 	ops := NewGormOperations[DummyModel](nil)
 

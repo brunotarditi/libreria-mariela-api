@@ -7,6 +7,7 @@ import (
 	"libreria/models"
 	"libreria/repositories"
 	"libreria/responses"
+	"libreria/utils"
 	"strconv"
 	"strings"
 
@@ -51,20 +52,17 @@ func (s *productService) ExportToExcel() (*excelize.File, error) {
 	f := excelize.NewFile()
 	sheet := "Products"
 	f.SetSheetName("Sheet1", sheet)
-	headers := []string{"CÓDIGO", "SKU", "NOMBRE", "MARGEN DE GANANCIA (%)", "DESCRIPCION", "CATEGORÍA", "MARCA"}
-
-	f.SetColWidth(sheet, "A", "B", 10)
-	f.SetColWidth(sheet, "C", "E", 30)
-	f.SetColWidth(sheet, "F", "G", 15)
+	headers := []string{"CÓDIGO", "SKU", "NOMBRE", "MARGEN DE GANANCIA (%)", "DESCRIPCIÓN", "CATEGORÍA", "MARCA"}
 
 	style, err := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
 			Bold:  true,
 			Color: "#FFFFFF",
+			Size:  11,
 		},
 		Fill: excelize.Fill{
 			Type:    "pattern",
-			Color:   []string{"#576CBC"},
+			Color:   []string{utils.CorporateColor},
 			Pattern: 1,
 		},
 		Border: []excelize.Border{
@@ -76,16 +74,21 @@ func (s *productService) ExportToExcel() (*excelize.File, error) {
 		Alignment: &excelize.Alignment{
 			Horizontal: "center",
 			Vertical:   "center",
+			WrapText:   true,
 		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error al crear estilo para encabezados: %v", err)
 	}
 
+	_ = f.SetRowHeight(sheet, 1, 26)
+
+	colMaxLens := make([]int, len(headers))
 	for i, h := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
 		f.SetCellValue(sheet, cell, h)
 		f.SetCellStyle(sheet, cell, cell, style)
+		colMaxLens[i] = len(h)
 
 		if h == "SKU" {
 			f.AddComment(sheet, excelize.Comment{
@@ -104,16 +107,77 @@ func (s *productService) ExportToExcel() (*excelize.File, error) {
 		}
 	}
 
-	productExample := []interface{}{
-		"ABC123",
-		"SKU001",
-		"Lapicera azul trazo fino",
-		25,
-		"Lapicera trazo fino de color azul",
-		"Lapiceras",
-		"Bic",
+	products, err := s.productRepo.FindAll()
+	if err != nil {
+		return nil, fmt.Errorf("error al obtener productos: %v", err)
 	}
-	f.SetSheetRow(sheet, "A2", &productExample)
+
+	numberStyle, _ := f.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{
+			Horizontal: "right",
+			Vertical:   "center",
+		},
+		CustomNumFmt: &[]string{"#,##0.00"}[0],
+	})
+
+	if len(products) > 0 {
+		for i, p := range products {
+			rowNum := i + 2
+			_ = f.SetRowHeight(sheet, rowNum, 20)
+
+			rowVals := []interface{}{
+				p.Code,
+				p.Sku,
+				p.Name,
+				p.ProfitMargin,
+				p.Description,
+				p.CategoryName,
+				p.BrandName,
+			}
+
+			for cIdx, v := range rowVals {
+				cell, _ := excelize.CoordinatesToCellName(cIdx+1, rowNum)
+				f.SetCellValue(sheet, cell, v)
+				strVal := fmt.Sprintf("%v", v)
+				if len(strVal) > colMaxLens[cIdx] {
+					colMaxLens[cIdx] = len(strVal)
+				}
+				if cIdx == 3 { // ProfitMargin
+					_ = f.SetCellStyle(sheet, cell, cell, numberStyle)
+				}
+			}
+		}
+	} else {
+		productExample := []interface{}{
+			"ABC123",
+			"SKU001",
+			"Lapicera azul trazo fino",
+			25.0,
+			"Lapicera trazo fino de color azul",
+			"Lapiceras",
+			"Bic",
+		}
+		f.SetSheetRow(sheet, "A2", &productExample)
+		for cIdx, v := range productExample {
+			strVal := fmt.Sprintf("%v", v)
+			if len(strVal) > colMaxLens[cIdx] {
+				colMaxLens[cIdx] = len(strVal)
+			}
+		}
+	}
+
+	// Auto-fit column widths
+	for i, maxLen := range colMaxLens {
+		colName, _ := excelize.ColumnNumberToName(i + 1)
+		width := float64(maxLen) + 5
+		if width < 12 {
+			width = 12
+		}
+		if width > 60 {
+			width = 60
+		}
+		_ = f.SetColWidth(sheet, colName, colName, width)
+	}
 
 	_, _ = f.NewSheet("Categories")
 
@@ -141,7 +205,12 @@ func (s *productService) ExportToExcel() (*excelize.File, error) {
 		f.SetCellValue("Brands", cell, brand)
 	}
 
-	for row := 2; row <= 101; row++ {
+	totalRows := len(products) + 1
+	if totalRows < 101 {
+		totalRows = 101
+	}
+
+	for row := 2; row <= totalRows; row++ {
 		categoryCell, _ := excelize.CoordinatesToCellName(6, row) // Columna F (Category)
 		brandCell, _ := excelize.CoordinatesToCellName(7, row)    // Columna G (Brand)
 

@@ -253,6 +253,7 @@ El prefijo global de la API es `/api/v1`.
 #### Categorías (`/api/v1/categories`)
 - `GET /` - Listar todas las categorías.
 - `GET /:id` - Obtener categoría por ID.
+- `GET /export` - Exportar catálogo de categorías a Excel (`.xlsx`).
 - `POST /` - Crear una categoría (`{"name": "Escritura"}`).
 - `POST /list` - Crear múltiples categorías en lote (`[{"name": "Escritura"}, {"name": "Papelería"}]`).
 - `PUT /:id` - Actualizar categoría.
@@ -262,6 +263,7 @@ El prefijo global de la API es `/api/v1`.
 #### Marcas (`/api/v1/brands`)
 - `GET /` - Listar todas las marcas.
 - `GET /:id` - Obtener marca por ID.
+- `GET /export` - Exportar catálogo de marcas a Excel (`.xlsx`).
 - `POST /` - Crear una marca (`{"name": "Rivadavia"}`).
 - `POST /list` - Crear múltiples marcas en lote (`[{"name": "Bic"}, {"name": "Faber-Castell"}]`).
 - `PUT /:id` - Actualizar marca.
@@ -275,6 +277,7 @@ El prefijo global de la API es `/api/v1`.
 #### Clientes (`/api/v1/customers`)
 - `GET /` - Listar clientes.
 - `GET /:id` - Obtener cliente por ID.
+- `GET /export` - Exportar catálogo de clientes a Excel (`.xlsx`).
 - `POST /` - Registrar cliente:
   ```json
   {
@@ -289,6 +292,7 @@ El prefijo global de la API es `/api/v1`.
 #### Proveedores (`/api/v1/suppliers`)
 - `GET /` - Listar proveedores.
 - `GET /:id` - Obtener proveedor por ID.
+- `GET /export` - Exportar catálogo de proveedores a Excel (`.xlsx`).
 - `POST /` - Registrar proveedor:
   ```json
   {

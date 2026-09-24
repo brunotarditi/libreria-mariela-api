@@ -8,3 +8,11 @@ type Customer struct {
 	ContactInfo   string        `gorm:"type:varchar(255)" json:"contact_info"`
 	SellHistories []SellHistory `gorm:"foreignKey:CustomerID" json:"-"`
 }
+
+func (c Customer) ExcelHeaders() []string {
+	return []string{"ID", "NOMBRE", "INFORMACIÓN DE CONTACTO", "FECHA DE CREACIÓN"}
+}
+
+func (c Customer) ExcelRow() []interface{} {
+	return []interface{}{c.ID, c.Name, c.ContactInfo, c.CreatedAt.Format("2006-01-02 15:04:05")}
+}

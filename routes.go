@@ -71,6 +71,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 		categories := private.Group("/categories")
 		{
 			categories.GET("", common.Get(categoryOps))
+			categories.GET("/export", common.Export[models.Category](categoryOps, "categories"))
 			categories.GET("/:id", common.GetByID(categoryOps))
 			categories.POST("", common.Create[models.Category, requests.CategoryRequest](categoryOps))
 			categories.POST("/list", common.CreateMany[models.Category, requests.CategoryRequestArray](categoryOps))
@@ -81,6 +82,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 		brands := private.Group("/brands")
 		{
 			brands.GET("", common.Get(brandOps))
+			brands.GET("/export", common.Export[models.Brand](brandOps, "brands"))
 			brands.GET("/:id", common.GetByID(brandOps))
 			brands.POST("", common.Create[models.Brand, requests.BrandRequest](brandOps))
 			brands.POST("/list", common.CreateMany[models.Brand, requests.BrandRequestArray](brandOps))
@@ -91,6 +93,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 		customers := private.Group("/customers")
 		{
 			customers.GET("", common.Get(customerdOps))
+			customers.GET("/export", common.Export[models.Customer](customerdOps, "customers"))
 			customers.GET("/:id", common.GetByID(customerdOps))
 			customers.POST("", common.Create[models.Customer, requests.CustomerRequest](customerdOps))
 			customers.PUT("/:id", common.Update[models.Customer, requests.CustomerRequest](customerdOps))
@@ -100,6 +103,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 		suppliers := private.Group("/suppliers")
 		{
 			suppliers.GET("", common.Get(supplierOps))
+			suppliers.GET("/export", common.Export[models.Supplier](supplierOps, "suppliers"))
 			suppliers.GET("/:id", common.GetByID(supplierOps))
 			suppliers.POST("", common.Create[models.Supplier, requests.SupplierRequest](supplierOps))
 			suppliers.PUT("/:id", common.Update[models.Supplier, requests.SupplierRequest](supplierOps))

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"libreria/services"
+	"libreria/utils"
 	"net/http"
 	"strings"
 
@@ -34,17 +35,14 @@ func (c *ProductController) GetExport() gin.HandlerFunc {
 
 		file, err := c.service.ExportToExcel()
 		if err != nil {
-			ctx.JSON(404, gin.H{"error": err.Error()})
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		filePath := "assets/templates/products.xlsx"
-		if err := file.SaveAs(filePath); err != nil {
-			ctx.JSON(500, gin.H{"error": "error al guardar el archivo Excel"})
+		if err := utils.StreamExcel(ctx, file, "products_export.xlsx"); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error al transmitir el archivo Excel: " + err.Error()})
 			return
 		}
-
-		ctx.FileAttachment(filePath, "products.xlsx")
 	}
 }
 
