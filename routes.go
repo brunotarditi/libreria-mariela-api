@@ -76,6 +76,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 			categories.POST("/list", common.CreateMany[models.Category, requests.CategoryRequestArray](categoryOps))
 			categories.PUT("/:id", common.Update[models.Category, requests.CategoryRequest](categoryOps))
 			categories.DELETE("/:id", common.Delete(categoryOps))
+			categories.POST("/bulk-delete", common.BulkDelete(categoryOps))
 		}
 		brands := private.Group("/brands")
 		{
@@ -85,6 +86,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 			brands.POST("/list", common.CreateMany[models.Brand, requests.BrandRequestArray](brandOps))
 			brands.PUT("/:id", common.Update[models.Brand, requests.BrandRequest](brandOps))
 			brands.DELETE("/:id", common.Delete(brandOps))
+			brands.POST("/bulk-delete", common.BulkDelete(brandOps))
 		}
 		customers := private.Group("/customers")
 		{
@@ -93,6 +95,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 			customers.POST("", common.Create[models.Customer, requests.CustomerRequest](customerdOps))
 			customers.PUT("/:id", common.Update[models.Customer, requests.CustomerRequest](customerdOps))
 			customers.DELETE("/:id", common.Delete(customerdOps))
+			customers.POST("/bulk-delete", common.BulkDelete(customerdOps))
 		}
 		suppliers := private.Group("/suppliers")
 		{
@@ -101,6 +104,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 			suppliers.POST("", common.Create[models.Supplier, requests.SupplierRequest](supplierOps))
 			suppliers.PUT("/:id", common.Update[models.Supplier, requests.SupplierRequest](supplierOps))
 			suppliers.DELETE("/:id", common.Delete(supplierOps))
+			suppliers.POST("/bulk-delete", common.BulkDelete(supplierOps))
 		}
 		products := private.Group("/products")
 		{
@@ -111,6 +115,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 			products.POST("/import", productController.ImportFromExcel())
 			products.PUT("/:id", common.Update[models.Product, requests.ProductRequest](productOps))
 			products.DELETE("/:id", common.Delete(productOps))
+			products.POST("/bulk-delete", common.BulkDelete(productOps))
 		}
 		purchaseHistories := private.Group("/purchases")
 		{

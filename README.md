@@ -229,6 +229,7 @@ El prefijo global de la API es `/api/v1`.
 | `POST` | `/api/v1/products` | Crea un nuevo producto. |
 | `PUT` | `/api/v1/products/:id` | Actualiza un producto existente. |
 | `DELETE` | `/api/v1/products/:id` | Elimina lógicamente un producto (soft-delete). |
+| `POST` | `/api/v1/products/bulk-delete` | Eliminación en lote por IDs (`{"ids": [1, 2, 5]}`). |
 | `GET` | `/api/v1/products/export` | Descarga el catálogo de productos en formato Excel (`.xlsx`). |
 | `POST` | `/api/v1/products/import` | Importa productos masivamente desde un archivo Excel (`multipart/form-data`, campo `file`). |
 
@@ -256,6 +257,7 @@ El prefijo global de la API es `/api/v1`.
 - `POST /list` - Crear múltiples categorías en lote (`[{"name": "Escritura"}, {"name": "Papelería"}]`).
 - `PUT /:id` - Actualizar categoría.
 - `DELETE /:id` - Eliminar categoría.
+- `POST /bulk-delete` - Eliminación en lote (`{"ids": [1, 2, 5]}`).
 
 #### Marcas (`/api/v1/brands`)
 - `GET /` - Listar todas las marcas.
@@ -264,6 +266,7 @@ El prefijo global de la API es `/api/v1`.
 - `POST /list` - Crear múltiples marcas en lote (`[{"name": "Bic"}, {"name": "Faber-Castell"}]`).
 - `PUT /:id` - Actualizar marca.
 - `DELETE /:id` - Eliminar marca.
+- `POST /bulk-delete` - Eliminación en lote (`{"ids": [1, 2, 5]}`).
 
 ---
 
@@ -281,6 +284,7 @@ El prefijo global de la API es `/api/v1`.
   ```
 - `PUT /:id` - Actualizar datos del cliente.
 - `DELETE /:id` - Eliminar cliente.
+- `POST /bulk-delete` - Eliminación en lote (`{"ids": [1, 2, 5]}`).
 
 #### Proveedores (`/api/v1/suppliers`)
 - `GET /` - Listar proveedores.
@@ -294,6 +298,7 @@ El prefijo global de la API es `/api/v1`.
   ```
 - `PUT /:id` - Actualizar datos del proveedor.
 - `DELETE /:id` - Eliminar proveedor.
+- `POST /bulk-delete` - Eliminación en lote (`{"ids": [1, 2, 5]}`).
 
 ---
 

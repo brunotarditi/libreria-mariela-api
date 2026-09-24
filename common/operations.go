@@ -23,6 +23,7 @@ type Operations[T any] interface {
 	CreateMany(model []T) error
 	Update(model T) (T, error)
 	Delete(id string) error
+	DeleteMany(ids []uint) (int64, error)
 	Pluck(field string) ([]string, error)
 }
 
@@ -87,6 +88,15 @@ func (ops *GormOperations[T]) Delete(id string) error {
 		return fmt.Errorf("ID inválido: debe ser numérico")
 	}
 	return ops.db.Delete(&model, parsedID).Error
+}
+
+func (ops *GormOperations[T]) DeleteMany(ids []uint) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	var model T
+	result := ops.db.Delete(&model, ids)
+	return result.RowsAffected, result.Error
 }
 
 func (ops *GormOperations[T]) Pluck(field string) ([]string, error) {

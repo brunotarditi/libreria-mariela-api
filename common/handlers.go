@@ -1,7 +1,9 @@
 package common
 
 import (
+	"fmt"
 	"libreria/requests"
+	"libreria/responses"
 	"net/http"
 	"strconv"
 
@@ -169,6 +171,40 @@ func Delete[T any](ops Operations[T]) gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "Eliminado con éxito"})
+	}
+}
+
+func BulkDelete[T any](ops Operations[T]) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req requests.BulkDeleteRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+			return
+		}
+
+		if err := req.Validate(); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		deletedCount, err := ops.DeleteMany(req.IDs)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		var message string
+		if deletedCount == 1 {
+			message = "Se eliminó 1 registro con éxito"
+		} else {
+			message = fmt.Sprintf("Se eliminaron %d registros con éxito", deletedCount)
+		}
+
+		c.JSON(http.StatusOK, responses.BulkDeleteResponse{
+			Success:      true,
+			Message:      message,
+			DeletedCount: deletedCount,
+		})
 	}
 }
 

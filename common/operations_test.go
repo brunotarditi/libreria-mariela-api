@@ -48,3 +48,23 @@ func TestOperations_Delete_RejectsNonNumericID(t *testing.T) {
 		}
 	}
 }
+
+func TestOperations_DeleteMany_EmptyIDs(t *testing.T) {
+	ops := NewGormOperations[DummyModel](nil)
+
+	count, err := ops.DeleteMany([]uint{})
+	if err != nil {
+		t.Fatalf("expected nil error for empty IDs, got: %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("expected 0 deleted rows, got: %d", count)
+	}
+
+	count, err = ops.DeleteMany(nil)
+	if err != nil {
+		t.Fatalf("expected nil error for nil IDs, got: %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("expected 0 deleted rows, got: %d", count)
+	}
+}
