@@ -15,18 +15,32 @@ type ProductStockService interface {
 }
 
 type productStockService struct {
-	db               *gorm.DB
-	productStockRepo repositories.ProductStockRepository
+	db                  *gorm.DB
+	productStockRepo    repositories.ProductStockRepository
+	notificationService NotificationService
 }
 
-func NewProductStockService(db *gorm.DB, stockRepo repositories.ProductStockRepository) ProductStockService {
-	return &productStockService{db: db, productStockRepo: stockRepo}
+func NewProductStockService(db *gorm.DB, stockRepo repositories.ProductStockRepository, notificationService ...NotificationService) ProductStockService {
+	var notifService NotificationService
+	if len(notificationService) > 0 {
+		notifService = notificationService[0]
+	}
+	return &productStockService{
+		db:                  db,
+		productStockRepo:    stockRepo,
+		notificationService: notifService,
+	}
 }
 
 func (s *productStockService) WithTx(tx *gorm.DB) ProductStockService {
+	var notifService NotificationService
+	if s.notificationService != nil {
+		notifService = s.notificationService.WithTx(tx)
+	}
 	return &productStockService{
-		db:               tx,
-		productStockRepo: s.productStockRepo.WithTx(tx),
+		db:                  tx,
+		productStockRepo:    s.productStockRepo.WithTx(tx),
+		notificationService: notifService,
 	}
 }
 
@@ -57,5 +71,14 @@ func (s *productStockService) ApplyMovement(productStock models.ProductStock, mo
 	if err := s.productStockRepo.Update(&stockExist); err != nil {
 		return err
 	}
+
+	// Trigger automático: alerta cuando el stock llega a 0 o al stock mínimo (<= 5 unidades)
+	if movementType == int(constants.STOCK_MOVEMENT_TYPE_OUT) && stockExist.Quantity <= 5 && s.notificationService != nil {
+		var product models.Product
+		if err := s.db.Select("id, name, sku").First(&product, stockExist.ProductID).Error; err == nil {
+			_ = s.notificationService.CreateStockWarning(product.ID, product.Name, product.Sku, stockExist.Quantity)
+		}
+	}
+
 	return nil
 }

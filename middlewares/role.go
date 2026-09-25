@@ -34,17 +34,22 @@ func RoleMiddleware() gin.HandlerFunc {
 			}
 		}
 
-		// POST/PUT requiere WRITE o ADMIN
-		if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut {
+		// POST/PUT/PATCH requiere WRITE o ADMIN
+		if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodPatch {
 			if !hasRole("WRITE") && !hasRole("ADMIN") {
 				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Permisos de escritura (WRITE) requeridos"})
 				return
 			}
 		}
 
-		// DELETE requiere ADMIN
+		// DELETE requiere ADMIN (se permite WRITE para gestionar notificaciones propias)
 		if c.Request.Method == http.MethodDelete {
-			if !hasRole("ADMIN") {
+			if c.FullPath() == "/api/v1/notifications" || c.FullPath() == "/api/v1/notifications/:id" {
+				if !hasRole("WRITE") && !hasRole("ADMIN") {
+					c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Permisos de escritura (WRITE) requeridos"})
+					return
+				}
+			} else if !hasRole("ADMIN") {
 				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Permisos de administrador (ADMIN) requeridos"})
 				return
 			}

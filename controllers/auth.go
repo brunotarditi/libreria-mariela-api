@@ -1,18 +1,25 @@
 package controllers
 
 import (
+	"libreria/services"
 	"net/http"
+	"strconv"
 
 	"github.com/brunotarditi/peak-auth/sdk/go"
 	"github.com/gin-gonic/gin"
 )
 
 type AuthController struct {
-	client *peakauth.Client
+	client              *peakauth.Client
+	notificationService services.NotificationService
 }
 
-func NewAuthController(client *peakauth.Client) *AuthController {
-	return &AuthController{client: client}
+func NewAuthController(client *peakauth.Client, notificationService ...services.NotificationService) *AuthController {
+	var notifService services.NotificationService
+	if len(notificationService) > 0 {
+		notifService = notificationService[0]
+	}
+	return &AuthController{client: client, notificationService: notifService}
 }
 
 func (ctrl *AuthController) ExchangeToken(c *gin.Context) {
@@ -31,6 +38,17 @@ func (ctrl *AuthController) ExchangeToken(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Trigger automático: notificación de bienvenida al registrarse / login
+	if ctrl.notificationService != nil && tokenResp.AccessToken != "" {
+		if claims, err := ctrl.client.VerifyToken(tokenResp.AccessToken); err == nil && claims.Subject != "" {
+			if uid64, err := strconv.ParseUint(claims.Subject, 10, 64); err == nil {
+				go func(uid uint) {
+					_ = ctrl.notificationService.CreateWelcomeNotification(uid)
+				}(uint(uid64))
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, tokenResp)

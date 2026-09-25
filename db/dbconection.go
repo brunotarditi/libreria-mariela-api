@@ -62,6 +62,7 @@ func AutoMigrate() {
 		&models.ProductStock{},
 		&models.StockMovement{},
 		&models.AuditLog{},
+		&models.Notification{},
 	)
 }
 

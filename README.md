@@ -26,6 +26,7 @@ El sistema administra catálogo de productos, control de stock automatizado, reg
   - [Autenticación](#autenticación)
   - [Salud del Sistema](#salud-del-sistema)
   - [Dashboard](#dashboard)
+  - [Notificaciones](#notificaciones)
   - [Productos](#productos)
   - [Categorías y Marcas](#categorías-y-marcas)
   - [Clientes y Proveedores](#clientes-y-proveedores)
@@ -217,6 +218,18 @@ El prefijo global de la API es `/api/v1`.
 | Método | Endpoint | Descripción |
 | :--- | :--- | :--- |
 | `GET` | `/api/v1/dashboard` | Retorna contadores generales (total de productos, clientes, proveedores) y registros recientes de auditoría. |
+
+---
+
+### Notificaciones
+
+| Método | Endpoint | Descripción |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/notifications` | Lista notificaciones del usuario/sistema (`?unread=true`, `?limit=20`). Incluye `unread_count`. |
+| `PATCH` | `/api/v1/notifications/:id/read` | Marca una notificación específica como leída. |
+| `PATCH` | `/api/v1/notifications/read-all` | Marca todas las notificaciones del usuario/sistema como leídas. |
+| `DELETE` | `/api/v1/notifications/:id` | Elimina una notificación por su ID. |
+| `DELETE` | `/api/v1/notifications` | Elimina todas las notificaciones personales del usuario autenticado. |
 
 ---
 

@@ -30,9 +30,11 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	purchaseRepo := repositories.NewPurchaseHistoryRepository(app.DB)
 	sellRepo := repositories.NewSellHistoryRepository(app.DB)
 	stockMovementRepo := repositories.NewStockMovementRepository(app.DB)
+	notificationRepo := repositories.NewNotificationRepository(app.DB)
 	// Servicios
+	notificationService := services.NewNotificationService(app.DB, notificationRepo)
 	productService := services.NewProductService(app.DB, productRepo, categoryOps, brandOps)
-	productStockService := services.NewProductStockService(app.DB, productStockRepo)
+	productStockService := services.NewProductStockService(app.DB, productStockRepo, notificationService)
 	stockMovementService := services.NewStockMovementService(app.DB, stockMovementRepo)
 	purchaseService := services.NewPurchaseHistoryService(app.DB, purchaseRepo, productStockRepo, stockMovementRepo, productStockService, stockMovementService)
 	sellService := services.NewSellHistoryService(app.DB, sellRepo, productStockRepo, stockMovementRepo, productStockService, stockMovementService)
@@ -45,7 +47,8 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	sellController := controllers.NewSellHistoryControllerController(sellService)
 	dashboardController := controllers.NewDashboardController(dashboardService)
 	budgetController := controllers.NewBudgetController(budgetService)
-	authController := controllers.NewAuthController(app.PeakAuthClient)
+	authController := controllers.NewAuthController(app.PeakAuthClient, notificationService)
+	notificationController := controllers.NewNotificationController(notificationService)
 
 	router := r.Group("/api/v1")
 
@@ -165,6 +168,15 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 			ops := common.NewGormOperations[models.Budget](app.DB)
 			budges.POST("", common.Create[models.Budget, requests.BudgetRequest](ops))
 			budges.DELETE("/:id", common.Delete(ops))
+		}
+
+		notifications := private.Group("/notifications")
+		{
+			notifications.GET("", notificationController.GetNotifications)
+			notifications.PATCH("/:id/read", notificationController.MarkAsRead)
+			notifications.PATCH("/read-all", notificationController.MarkAllAsRead)
+			notifications.DELETE("/:id", notificationController.Delete)
+			notifications.DELETE("", notificationController.ClearAll)
 		}
 
 	}
