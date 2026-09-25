@@ -31,6 +31,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	sellRepo := repositories.NewSellHistoryRepository(app.DB)
 	stockMovementRepo := repositories.NewStockMovementRepository(app.DB)
 	notificationRepo := repositories.NewNotificationRepository(app.DB)
+	searchRepo := repositories.NewSearchRepository(app.DB)
 	// Servicios
 	notificationService := services.NewNotificationService(app.DB, notificationRepo)
 	productService := services.NewProductService(app.DB, productRepo, categoryOps, brandOps)
@@ -40,6 +41,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	sellService := services.NewSellHistoryService(app.DB, sellRepo, productStockRepo, stockMovementRepo, productStockService, stockMovementService)
 	dashboardService := services.NewDashboardService(app.DB, dashboardRepo, supplierOps, customerdOps, productOps)
 	budgetService := services.NewBudgetService(app.DB)
+	searchService := services.NewSearchService(app.DB, searchRepo)
 
 	// Controladores
 	productController := controllers.NewProductController(productService)
@@ -49,6 +51,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	budgetController := controllers.NewBudgetController(budgetService)
 	authController := controllers.NewAuthController(app.PeakAuthClient, notificationService)
 	notificationController := controllers.NewNotificationController(notificationService)
+	searchController := controllers.NewSearchController(searchService)
 
 	router := r.Group("/api/v1")
 
@@ -70,6 +73,7 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 	private.Use(middlewares.AuditMiddleware(app.DB))
 
 	{
+		private.GET("/search", searchController.Search)
 
 		categories := private.Group("/categories")
 		{

@@ -27,6 +27,7 @@ El sistema administra catálogo de productos, control de stock automatizado, reg
   - [Salud del Sistema](#salud-del-sistema)
   - [Dashboard](#dashboard)
   - [Notificaciones](#notificaciones)
+  - [Búsqueda Global](#búsqueda-global)
   - [Productos](#productos)
   - [Categorías y Marcas](#categorías-y-marcas)
   - [Clientes y Proveedores](#clientes-y-proveedores)
@@ -230,6 +231,25 @@ El prefijo global de la API es `/api/v1`.
 | `PATCH` | `/api/v1/notifications/read-all` | Marca todas las notificaciones del usuario/sistema como leídas. |
 | `DELETE` | `/api/v1/notifications/:id` | Elimina una notificación por su ID. |
 | `DELETE` | `/api/v1/notifications` | Elimina todas las notificaciones personales del usuario autenticado. |
+
+---
+
+### Búsqueda Global
+
+| Método | Endpoint | Descripción |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/search?q={query}` | Búsqueda unificada multientidad para la Command Palette / barra superior (`products`, `brands`, `categories`, `suppliers`, `customers`). |
+
+**Ejemplo de respuesta (`GET /api/v1/search?q=cuaderno`):**
+```json
+{
+  "products": [{ "id": 1, "title": "Cuaderno Rivadavia", "subtitle": "Código: C-102 | SKU: 7791234", "route": "/products/detail/1" }],
+  "brands": [{ "id": 4, "title": "Bic", "subtitle": "Marca de librería", "route": "/brands/detail/4" }],
+  "categories": [{ "id": 2, "title": "Escolares", "subtitle": "Categoría", "route": "/categories/detail/2" }],
+  "suppliers": [{ "id": 3, "title": "Lito Distribuidora", "subtitle": "Contacto: 112345678", "route": "/suppliers/detail/3" }],
+  "customers": [{ "id": 8, "title": "Juan Pérez", "subtitle": "Contacto: 119876543", "route": "/customers/detail/8" }]
+}
+```
 
 ---
 
