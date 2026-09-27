@@ -19,33 +19,33 @@ func RoleMiddleware() gin.HandlerFunc {
 		roles := claims.Roles
 		hasRole := func(r string) bool {
 			for _, role := range roles {
-				if role == r || role == "ROOT" {
+				if role == r || role == "OWNER" || role == "ROOT" {
 					return true
 				}
 			}
 			return false
 		}
 
-		// GET requiere READ, WRITE o ADMIN
+		// GET requiere READ, USER, WRITE o ADMIN
 		if c.Request.Method == http.MethodGet {
-			if !hasRole("READ") && !hasRole("WRITE") && !hasRole("ADMIN") {
+			if !hasRole("READ") && !hasRole("USER") && !hasRole("WRITE") && !hasRole("ADMIN") {
 				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Permisos de lectura (READ) requeridos"})
 				return
 			}
 		}
 
-		// POST/PUT/PATCH requiere WRITE o ADMIN
+		// POST/PUT/PATCH requiere WRITE, USER o ADMIN
 		if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodPatch {
-			if !hasRole("WRITE") && !hasRole("ADMIN") {
+			if !hasRole("WRITE") && !hasRole("USER") && !hasRole("ADMIN") {
 				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Permisos de escritura (WRITE) requeridos"})
 				return
 			}
 		}
 
-		// DELETE requiere ADMIN (se permite WRITE para gestionar notificaciones propias)
+		// DELETE requiere ADMIN u OWNER (se permite WRITE o USER para gestionar notificaciones propias)
 		if c.Request.Method == http.MethodDelete {
 			if c.FullPath() == "/api/v1/notifications" || c.FullPath() == "/api/v1/notifications/:id" {
-				if !hasRole("WRITE") && !hasRole("ADMIN") {
+				if !hasRole("WRITE") && !hasRole("USER") && !hasRole("ADMIN") {
 					c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Permisos de escritura (WRITE) requeridos"})
 					return
 				}
