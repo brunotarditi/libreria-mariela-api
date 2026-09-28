@@ -2,10 +2,9 @@ package middlewares
 
 import (
 	"libreria/models"
-	"strconv"
+	"libreria/utils"
 	"time"
 
-	peakauthgin "github.com/brunotarditi/peak-auth/sdk/go/gin"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -18,23 +17,16 @@ func AuditMiddleware(db *gorm.DB) gin.HandlerFunc {
 		route := c.FullPath()
 		method := c.Request.Method
 
-		// Recuperar el ID de usuario desde los claims del SDK de Peak Auth
-		var userID *uint = nil
-		if claims, ok := peakauthgin.ClaimsFromContext(c); ok && claims.Subject != "" {
-			if uid64, err := strconv.ParseUint(claims.Subject, 10, 64); err == nil {
-				uid := uint(uid64)
-				userID = &uid
-			}
-		} else if id, exists := c.Get("user_id"); exists {
-			uid := id.(uint)
-			userID = &uid
-		}
+		// Recuperar el ID de usuario y nombre/email desde el contexto o claims
+		userID := utils.GetUserIDFromContext(c)
+		userName := utils.GetUserNameFromContext(c)
 
 		// Continuar con el procesamiento
 		c.Next()
 
 		audit := models.AuditLog{
 			UserID:    userID,
+			UserName:  userName,
 			Route:     route,
 			Method:    method,
 			IP:        ip,

@@ -10,6 +10,7 @@ type DashboardResponse struct {
 }
 
 type AuditLog struct {
+	UserID    *uint     `json:"user_id,omitempty"`
 	UserName  string    `json:"user_name"`
 	Entity    string    `json:"entity"`
 	Action    string    `json:"action"`

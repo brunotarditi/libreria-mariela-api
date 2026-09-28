@@ -21,3 +21,27 @@ func GetUserIDFromContext(c *gin.Context) *uint {
 	}
 	return nil
 }
+
+// GetUserNameFromContext retrieves the username or subject representation from Peak Auth claims or Gin context.
+func GetUserNameFromContext(c *gin.Context) string {
+	if claims, ok := peakauthgin.ClaimsFromContext(c); ok {
+		if claims.Username != "" {
+			return claims.Username
+		}
+		if claims.Subject != "" {
+			return "Usuario #" + claims.Subject
+		}
+	}
+	if name, exists := c.Get("username"); exists {
+		if uName, ok := name.(string); ok && uName != "" {
+			return uName
+		}
+	}
+	if name, exists := c.Get("user_name"); exists {
+		if uName, ok := name.(string); ok && uName != "" {
+			return uName
+		}
+	}
+	return ""
+}
+
